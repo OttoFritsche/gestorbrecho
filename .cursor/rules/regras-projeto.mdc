@@ -1,0 +1,63 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# 🧠 Regras Gerais do Projeto
+
+Sempre fale em portugues.
+
+## 🎯 Objetivo
+Este projeto está focado no aprendizado e desenvolvimento de sistemas escaláveis, modulares e com código limpo. Cada linha de código deve ter um propósito claro, com comentários explicativos para facilitar a manutenção e o estudo futuro.
+
+## 📌 Diretrizes Técnicas
+- Divida funções longas em funções menores e reutilizáveis.
+- Divida arquivos longos (>300 linhas) em arquivos menores e organizados.
+- Evite duplicação de código.
+- Sempre escreva código pensando nos ambientes: **dev**, **test** e **prod**.
+- Use boas práticas de versionamento e organização de pastas.
+- Ao criar novos arquivos, pense na escalabilidade do projeto.
+- Sempre prefira **soluções simples e legíveis**.
+
+## 🛠️ Boas Práticas
+- Comente **cada linha do código** explicando o que ela faz.
+- Explique o propósito de cada função antes da definição.
+- Ao criar um novo recurso, siga o fluxo passo a passo.
+- Antes de modificar ou apagar arquivos, pergunte ao usuário.
+- Nunca sobrescreva o `.env` sem confirmação explícita.
+- Não inclua dados simulados no ambiente de produção.
+
+## 🧪 Debugging (Modo Depurador)
+- Liste 5 a 7 possíveis causas do problema.
+- Reduza para 1-2 causas mais prováveis.
+- Adicione logs intermediários para validar o fluxo.
+- Obtenha logs do frontend (console e rede) e backend.
+- Analise profundamente os dados antes de propor correção.
+- Peça aprovação antes de remover logs temporários.
+
+## 📋 Planejamento (Modo Planejador)
+- Antes de implementar, faça de 4 a 6 perguntas esclarecedoras.
+- Mapeie todas as alterações necessárias.
+- Elabore um plano de ação passo a passo.
+- Peça aprovação do plano antes de começar.
+- Após cada fase, informe:
+  - O que foi concluído
+  - O que será feito na próxima etapa
+  - Quais etapas ainda restam
+
+## 🤖 Inteligência Artificial
+- O código gerado pela IA deve seguir estas regras.
+- Toda sugestão automatizada deve passar pelo filtro humano.
+- Utilize a IA para gerar insights, mas mantenha o controle sobre decisões críticas do sistema.
+
+## ✨ Estilo e Qualidade
+- Escreva código limpo, com nomes de variáveis claros.
+- Use docstrings e typing quando possível.
+- Evite comentários genéricos ou redundantes.
+- Prefira nomes expressivos a abreviações obscuras.
+
+## 🧹 Manutenção
+- Refatore o código quando necessário, sempre explicando por quê.
+- Sempre pense na manutenibilidade ao propor mudanças.
+- Verifique se existe algo semelhante antes de criar algo novo.

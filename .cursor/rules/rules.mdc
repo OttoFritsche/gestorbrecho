@@ -1,0 +1,103 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+# METADADOS PARA PROCESSAMENTO POR IA
+version: 2.1
+formato: yaml
+linguagem: pt-BR
+codificacao: UTF-8
+ultima_atualizacao: 2025-05-07T19:17:17-03:00
+contexto_ia:
+  - tipo_regras: diretrizes_desenvolvimento
+  - dominio: gestao_brecho
+  - complexidade: alta
+
+# CATEGORIAS PRINCIPAIS
+regras:
+  compreensao_codigo:
+    prioridade: alta
+    diretrizes:
+      - analise_codigo_existente_antes_solucao
+      - identificacao_causa_raiz_antes_correcao
+  
+  estilo_codigo:
+    prioridade: media
+    diretrizes:
+      - preferencia_solucoes_simples
+      - consistencia_estilo_projeto
+      - prevencao_duplicacao_codigo
+
+  seguranca:
+    prioridade: critica
+    diretrizes:
+      - priorizacao_seguranca_dados_sensiveis
+      - consideracao_escalabilidade_solucoes
+
+  implementacao:
+    prioridade: alta
+    diretrizes:
+      - divisao_tarefas_complexas_etapas
+      - estrategia_testes_para_solucoes
+      - foco_modificacoes_relevantes
+
+  formato_respostas:
+    prioridade: media
+    diretrizes:
+      - detalhamento_tecnico_funcionamento_codigo
+      - estrutura_resposta_visao_geral_primeiro
+
+  adaptacao_projeto:
+    prioridade: alta
+    diretrizes:
+      - preferencia_recursos_existentes
+      - consideracao_ambientes_multiplos
+      - analise_pos_implementacao
+
+# METADADOS TÉCNICOS
+controle_versao:
+  politica_atualizacao: semanal
+  historico_mudancas: auto_registrado
+
+dependencias:
+  - sistemas:
+      - gestor_brecho
+      - supabase
+  - ferramentas:
+      - eslint
+      - typescript
+
+# PRIORIZAÇÃO
+niveis_prioridade:
+  critica:
+    - seguranca
+    - disponibilidade_sistema
+  
+  alta:
+    - compreensao_codigo
+    - implementacao
+    - adaptacao_projeto
+  
+  media:
+    - estilo_codigo
+    - formato_respostas
+
+# POLÍTICAS DE EXECUÇÃO
+fluxo_validacao:
+  - analise_estatica_codigo
+  - verificacao_conformidade_estilo
+  - teste_unitario_automatizado
+  - revisao_humana
+
+tratamento_excecoes:
+  - registro_logs_detalhados
+  - notificacoes_instantaneas
+  - rollback_automatico
+
+# MANUTENÇÃO
+ciclo_vida_regras:
+  revisao: semanal
+  atualizacao: mensal
+  depreciacao: trimestral

@@ -1,0 +1,7 @@
+cd secret-garage-insights
+
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+
+npm run dev
+
+npm run dev

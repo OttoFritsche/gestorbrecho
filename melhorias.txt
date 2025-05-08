@@ -1,0 +1,113 @@
+---
+# METADADOS PARA PROCESSAMENTO POR IA
+versao: 2.0
+formato: yaml
+linguagem: pt-BR
+dominio: gestao_brecho
+ultima_atualizacao: 2025-05-07T19:26:30-03:00
+contexto_ia:
+  - tipo: roadmap_tecnico
+  - complexidade: alta
+  - prioridade: estrategica
+
+# ESTRUTURA PRINCIPAL
+modulos:
+  financeiro:
+    - id: MELH-001
+      titulo: "Automação de Despesas Recorrentes"
+      status: planejamento
+      prioridade: alta
+      implementacao:
+        banco_dados:
+          - acao: "Criar tabela despesas_recorrentes"
+            schema: >
+              CREATE TABLE despesas_recorrentes (
+                id UUID PRIMARY KEY,
+                user_id UUID REFERENCES auth.users,
+                descricao TEXT NOT NULL,
+                valor_estimado NUMERIC(12,2) CHECK (valor_estimado > 0),
+                categoria_id UUID REFERENCES categorias NOT NULL,
+                forma_pagamento_padrao_id UUID REFERENCES formas_pagamento,
+                frequencia TEXT CHECK (frequencia IN (
+                  'diaria','semanal','quinzenal','mensal',
+                  'bimestral','trimestral','semestral','anual')),
+                dia_vencimento INT CHECK (dia_vencimento BETWEEN 1 AND 31),
+                mes_referencia INT CHECK (mes_referencia BETWEEN 1 AND 12),
+                data_inicio DATE NOT NULL,
+                data_fim DATE,
+                ativo BOOLEAN DEFAULT TRUE,
+                observacoes TEXT,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+              )
+
+        backend:
+          - acao: "Implementar Edge Function agendada"
+            requisitos:
+              - "Configurar cron job diário"
+              - "Lógica de geração de despesas"
+              - "Tratamento de exceções"
+
+        frontend:
+          - acao: "Criar interface de gestão"
+            componentes:
+              - "Formulário CRUD"
+              - "Listagem com filtros"
+              - "Indicador visual de status"
+
+  vendas_estoque:
+    - id: MELH-002
+      titulo: "Melhorias na Integração Vendas-Estoque"
+      status: desenvolvimento
+      prioridade: critica
+      requisitos:
+        - "Transações atômicas"
+        - "Mecanismo de rollback"
+        - "Lock de concorrência"
+
+# DEPENDÊNCIAS TÉCNICAS
+dependencias:
+  banco_dados:
+    - "Supabase PostgreSQL 15+"
+  infraestrutura:
+    - "Supabase Edge Functions"
+  bibliotecas:
+    - "React Query v5+"
+    - "Zod v3.22+"
+
+# PRÓXIMOS PASSOS
+proximas_etapas:
+  - id: NT-001
+    titulo: "Implementação do Módulo de Consignação"
+    requisitos:
+      - "Modelagem de dados para vendedores/fornecedores"
+      - "Fluxo de comissões automatizado"
+      - "Integração com sistema financeiro"
+    prioridade: alta
+    dependencias:
+      - "Conclusão MELH-001"
+      - "Atualização para React Query v5"
+
+  - id: NT-002  
+    titulo: "Sistema de Notificações Inteligentes"
+    componentes:
+      - "Alertas de estoque crítico"
+      - "Lembretes de vencimentos"
+      - "Monitoramento de metas"
+
+# METADADOS DE GESTÃO
+gestao:
+  ciclo_revisao: semanal
+  responsaveis:
+    - "equipe_backend"
+    - "equipe_frontend"
+  criterios_priorizacao:
+    - "Impacto operacional"
+    - "Complexidade técnica"
+    - "Demanda do usuário"
+
+# OBSERVAÇÕES FINAIS
+observacoes:
+  - "Necessário revisar fluxo do modal de descrição"
+  - "Analisar lógica para implementação de consignado"
+  - "Integrar cadastro de vendedores/fornecedores"

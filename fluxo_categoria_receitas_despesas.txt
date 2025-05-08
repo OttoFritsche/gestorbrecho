@@ -1,0 +1,106 @@
+======================================================
+FLUXO DE TRABALHO - GESTÃO FINANCEIRA ORGANIZADA
+======================================================
+
+PRINCÍPIO FUNDAMENTAL: CATEGORIAS PRIMEIRO
+------------------------------------------------------
+
+Para garantir uma gestão financeira eficaz, recomendamos fortemente seguir o fluxo "categorias primeiro", onde você cadastra suas categorias de receitas e despesas antes de registrar as transações financeiras.
+
+POR QUE CATEGORIZAR?
+------------------------------------------------------
+• Organização financeira consistente
+• Relatórios precisos e úteis
+• Melhor controle orçamentário
+• Planejamento tributário facilitado
+• Decisões baseadas em dados reais
+• Identificação de tendências e oportunidades
+
+FLUXO DE TRABALHO RECOMENDADO
+======================================================
+
+ETAPA 1: CADASTRAMENTO DE CATEGORIAS
+------------------------------------------------------
+
+A) CATEGORIAS DE RECEITAS
+1. Acesse "Categorias" no menu principal
+2. Clique em "Nova Categoria"
+3. Preencha:
+   - Nome: Ex: "Vendas", "Aluguéis", "Serviços", "Comissões"
+   - Tipo: Selecione "receita"
+   - Cor: Escolha cores distintas para fácil identificação
+   - Descrição: Detalhe o propósito da categoria
+
+B) CATEGORIAS DE DESPESAS
+1. Acesse "Categorias" no menu principal
+2. Clique em "Nova Categoria"
+3. Preencha:
+   - Nome: Ex: "Fornecedores", "Aluguel", "Impostos", "Folha de Pagamento"
+   - Tipo: Selecione "despesa"
+   - Cor: Escolha cores distintas das receitas
+   - Descrição: Detalhe o propósito da categoria
+
+ETAPA 2: REGISTRO DE TRANSAÇÕES
+------------------------------------------------------
+
+A) REGISTRO DE RECEITAS
+1. Acesse "Receitas" no menu
+2. Clique em "Adicionar Receita" (normal ou recorrente)
+3. Selecione a categoria previamente criada
+4. Preencha os demais dados (valor, data, descrição)
+5. Salve a receita
+
+B) REGISTRO DE DESPESAS
+1. Acesse "Despesas" no menu
+2. Clique em "Adicionar Despesa" (normal ou recorrente)
+3. Selecione a categoria previamente criada
+4. Preencha os demais dados (valor, data, vencimento, etc.)
+5. Salve a despesa
+
+ETAPA 3: ANÁLISE E CONTROLE
+------------------------------------------------------
+1. Acesse os relatórios financeiros
+2. Visualize as receitas e despesas por categoria
+3. Identifique tendências e oportunidades
+4. Tome decisões baseadas em dados organizados
+
+SUGESTÕES DE CATEGORIAS INICIAIS
+======================================================
+
+CATEGORIAS DE RECEITAS:
+------------------------------------------------------
+• Vendas de Produtos
+• Serviços Prestados
+• Aluguéis
+• Comissões
+• Consultorias
+• Doações
+• Cashback
+• Reembolsos
+
+CATEGORIAS DE DESPESAS:
+------------------------------------------------------
+• Aluguel
+• Fornecedores
+• Impostos e Taxas
+• Salários e Encargos
+• Marketing e Publicidade
+• Utilitários (água, luz, internet)
+• Manutenção
+• Materiais de Escritório
+• Equipamentos
+• Logística e Transporte
+• Seguros
+• Alimentação
+• Assinaturas e Serviços
+
+BENEFÍCIOS ESPERADOS
+======================================================
+• CURTO PRAZO: Cadastro mais rápido e preciso
+• MÉDIO PRAZO: Relatórios financeiros confiáveis
+• LONGO PRAZO: Decisões estratégicas baseadas em histórico organizado
+
+======================================================
+Lembre-se: Um negócio bem organizado financeiramente
+tem muito mais chances de prosperar e crescer!
+====================================================== 

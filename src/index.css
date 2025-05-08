@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Fundo amarelo clarinho similar ao da página do Assistente */
+    --background: 48 100% 97%;
+    --foreground: 30 10% 25%;
+
+    /* Cards com fundo branco e bordas sutis âmbar */
+    --card: 0 0% 100%;
+    --card-foreground: 30 10% 25%;
+
+    /* Popover com fundo branco */
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 10% 25%;
+
+    /* Cor primária âmbar/marrom (equivalente ao #92400e) */
+    --primary: 33 91% 31%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secundária mais clara */
+    --secondary: 35 100% 98%;
+    --secondary-foreground: 33 91% 31%;
+
+    /* Cores muted em tons de âmbar */
+    --muted: 48 96% 92%;
+    --muted-foreground: 30 10% 45%;
+
+    /* Accent em tom âmbar mais pronunciado */
+    --accent: 43 96% 90%;
+    --accent-foreground: 33 91% 31%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Bordas e inputs em tom âmbar sutil */
+    --border: 48 38% 90%;
+    --input: 48 38% 92%;
+    --ring: 33 91% 31%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar em tom levemente mais claro que o fundo principal */
+    --sidebar-background: 48 100% 98%;
+    --sidebar-foreground: 33 70% 30%;
+    --sidebar-primary: 33 91% 31%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 43 96% 90%;
+    --sidebar-accent-foreground: 33 91% 31%;
+    --sidebar-border: 48 38% 85%;
+    --sidebar-ring: 33 91% 31%;
+  }
+
+  .dark {
+    --background: 27 30% 10%;
+    --foreground: 48 38% 92%;
+
+    --card: 27 30% 13%;
+    --card-foreground: 48 38% 92%;
+
+    --popover: 27 30% 13%;
+    --popover-foreground: 48 38% 92%;
+
+    /* Mantém a cor primária âmbar similar ao tema claro */
+    --primary: 25 95% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 27 30% 17%;
+    --secondary-foreground: 48 38% 92%;
+
+    --muted: 27 30% 20%;
+    --muted-foreground: 48 20% 75%;
+
+    --accent: 30 40% 25%;
+    --accent-foreground: 48 38% 92%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 27 30% 23%;
+    --input: 27 30% 23%;
+    --ring: 48 20% 75%;
+
+    --sidebar-background: 27 30% 10%;
+    --sidebar-foreground: 48 20% 90%;
+    --sidebar-primary: 25 95% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 40% 25%;
+    --sidebar-accent-foreground: 48 20% 90%;
+    --sidebar-border: 27 30% 23%;
+    --sidebar-ring: 25 95% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-inter;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-poppins font-semibold;
+  }
+}
+
+@layer components {
+
+  /* Revert card border to primary with opacity */
+  .card {
+    @apply border border-primary/20;
+  }
+
+  .feature-card {
+    @apply p-6 rounded-xl bg-white border border-amber-100 shadow-sm hover:shadow-md transition-shadow duration-300;
+  }
+
+  .feature-icon {
+    @apply h-12 w-12 p-2 rounded-lg bg-amber-50 text-amber-800 mb-4;
+  }
+
+  .cta-button {
+    @apply bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300 shadow-lg hover:shadow-xl;
+  }
+
+  .cta-button-secondary {
+    @apply bg-white hover:bg-amber-50 text-amber-900 font-semibold py-3 px-6 rounded-lg transition-colors duration-300 border border-amber-200 shadow-sm hover:shadow-md;
+  }
+}

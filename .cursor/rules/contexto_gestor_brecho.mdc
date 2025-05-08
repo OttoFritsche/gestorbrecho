@@ -1,0 +1,220 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+# METADADOS PARA PROCESSAMENTO POR IA
+version: 2.0
+formato: yaml
+linguagem: pt-BR
+codificacao: UTF-8
+ultima_atualizacao: 2025-05-07T19:13:01-03:00
+contexto_ia:
+  - tipo_sistema: gestao_brecho
+  - dominio: varejo_moda_sustentavel
+  - complexidade: alta
+  - padrao_arquitetural: layered_architecture
+  - modelo_negocio: B2B
+
+# CONTEXTO PRINCIPAL
+projeto:
+  nome: "GESTOR BRECHÓ"
+  proposito: |
+    Sistema completo para gestão de brechós e lojas de artigos usados,
+    automatizando processos operacionais, financeiros e administrativos
+
+problemas_resolvidos:
+  - controle_estoque_ineficiente
+  - gestao_financeira_complexa
+  - monitoramento_vendas_insuficiente
+  - relacionamento_clientes_fragmentado
+  - categorizacao_produtos_diversificados
+
+usuarios:
+  - proprietarios_brechos
+  - vendedores
+  - administradores_financeiros
+  - equipe_operacional
+
+# ARQUITETURA TÉCNICA
+tecnologias:
+  frontend:
+    - react_typescript
+    - vite
+    - react_router
+    - tailwind_css
+    - shadcn_ui
+    - react_query
+
+  backend:
+    - supabase:
+        - postgresql
+        - rest_apis
+        - autenticacao
+    - funcoes_serverless
+
+  ferramentas:
+    - eslint
+    - typescript
+    - lucide_react
+
+camadas_aplicacao:
+  apresentacao: componentes_react
+  logica_negocios: serviços_contextos
+  acesso_dados: integração_supabase
+  infraestrutura: configuracao_supabase
+
+comunicacao_componentes:
+  - api_rest
+  - contextos_react
+  - props_callbacks
+  - react_query
+
+# FUNCIONALIDADES PRINCIPAIS
+modulos:
+  gestao_produtos:
+    - cadastro_multiatributos
+    - controle_estoque
+    - categorizacao_flexivel
+    - status_gestao
+
+  vendas:
+    - registro_multiplos_itens
+    - suporte_pagamentos_diversos
+    - parcelamento_automatico
+    - integracao_estoque
+
+  clientes:
+    - cadastro_completo
+    - historico_transacoes
+    - gestao_relacionamento
+
+  financeiro:
+    - receitas_automaticas
+    - despesas_categorizadas
+    - fluxo_caixa
+    - relatorios_performance
+
+  relatorios:
+    - resumo_financeiro
+    - analise_categorias
+    - comparativo_periodos
+
+  ia:
+    - assistente_virtual
+    - suporte_contextual
+    - integracao_dados
+
+# FLUXOS OPERACIONAIS
+fluxos_trabalho:
+  cadastro:
+    - categorias_produtos
+    - produtos_imagens
+    - estoque_inicial
+    - fornecedores
+    - clientes
+    - usuarios
+
+  venda:
+    - selecao_cliente
+    - adicao_produtos
+    - definicao_pagamento
+    - atualizacao_estoque
+    - registro_receita
+    - geracao_parcelas
+
+  gestao_financeira:
+    - categorias_financeiras
+    - registro_receitas
+    - registro_despesas
+    - monitoramento_parcelas
+    - geracao_relatorios
+
+# COMPONENTES CRÍTICOS
+servicos_chave:
+  produtos:
+    - crud_produtos
+    - upload_imagens
+    - reserva_estoque
+
+  vendas:
+    - criacao_vendas
+    - edicao_vendas
+    - cancelamento_vendas
+
+  financeiro:
+    - processamento_recorrencias
+    - reconciliacao_fluxo_caixa
+
+  integracao:
+    - supabase_client
+    - autenticacao
+
+# DEPENDÊNCIAS E INTEGRAÇÕES
+dependencias:
+  plataformas:
+    - supabase
+    - lovable
+
+  gerenciamento:
+    - npm
+    - bun
+
+  pacotes_principais:
+    - react: ^18.2.0
+    - react_router: ^6.22.0
+    - shadcn_ui: ^0.5.0
+    - tailwind_css: ^3.4.0
+    - supabase_js: ^2.39.0
+
+# CONFIGURAÇÃO DE AMBIENTE
+ambientes:
+  desenvolvimento:
+    comando: npm run dev
+    portas: [3000, 3001]
+    variaveis_ambiente:
+      - VITE_SUPABASE_URL
+      - VITE_SUPABASE_KEY
+
+  producao:
+    comando: npm run build
+    otimizacoes:
+      - minificacao
+      - tree_shaking
+      - chunk_splitting
+
+  deploy:
+    plataforma: lovable
+    configuracao: auto_scale
+
+# ANÁLISE TÉCNICA
+complexidades:
+  - sincronizacao_vendas_fluxo_caixa
+  - processamento_recorrencias
+  - gestao_parcelamentos
+  - upload_imagens
+
+dividas_tecnicas:
+  - todos_identificados: 7
+  - prioridades:
+      alta: 3
+      media: 2
+      baixa: 2
+
+melhorias_pendentes:
+  - implementacao_testes_automatizados
+  - remocao_logs_depuracao
+  - expansao_recursos_ia
+
+# METADADOS DE MANUTENÇÃO
+maintainers:
+  - lead_developer
+  - devops_engineer
+  - qa_specialist
+
+ciclo_atualizacao: semanal
+politica_versoes: semver
+padrao_comunicacao: RESTful
+
+

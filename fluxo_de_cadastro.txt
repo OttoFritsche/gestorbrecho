@@ -1,0 +1,111 @@
+# FLUXO DE CADASTRO - GESTOR DE BRECHÓ
+# ===============================
+
+Este documento apresenta o fluxo correto de cadastros e operações no sistema Gestor de Brechó. 
+Siga esta ordem para garantir o funcionamento adequado do sistema.
+
+## ORDEM DE PRIORIDADE DE CADASTROS
+----------------------------------
+
+1. CADASTRO DE CATEGORIAS DE PRODUTOS
+   - Primeiro, é necessário cadastrar as categorias de produtos
+   - Exemplo: Roupas, Eletrônicos, Acessórios, Móveis, etc.
+   - Localização no menu: Catálogo > Categorias
+   - Importância: As categorias são essenciais para organizar o inventário e facilitar buscas
+
+2. CADASTRO DE PRODUTOS
+   - Após criar as categorias, cadastre os produtos em estoque
+   - Informações necessárias: nome, descrição, categoria, código, preço de compra, preço de venda
+   - Localização no menu: Catálogo > Produtos > Novo Produto
+   - Dica: Imagens de qualidade ajudam na identificação dos produtos
+
+3. GESTÃO DE ESTOQUE
+   - Com os produtos cadastrados, registre as quantidades iniciais
+   - Localização no menu: Estoque > Gerenciar Estoque
+   - Informações importantes: quantidade, localização física, condição do produto
+   - Observação: O estoque será automaticamente atualizado após as vendas
+
+4. CADASTRO DE FORNECEDORES (se aplicável)
+   - Registre seus fornecedores ou parceiros de consignação
+   - Localização no menu: Cadastros > Fornecedores
+   - Dados necessários: nome, contato, endereço, condições comerciais
+
+5. CADASTRO DE CLIENTES
+   - Cadastre os clientes antes de registrar vendas
+   - Localização no menu: Cadastros > Clientes
+   - Dados necessários: nome, telefone, e-mail, endereço
+   - Benefício: Permite histórico de compras e ações de marketing
+
+6. CADASTRO DE FORMAS DE PAGAMENTO
+   - Configure as formas de pagamento aceitas
+   - Localização no menu: Financeiro > Formas de Pagamento
+   - Exemplos: Dinheiro, Cartão de Crédito, PIX, Transferência
+
+7. CADASTRO DE VENDEDORES/USUÁRIOS
+   - Registre os usuários que terão acesso ao sistema
+   - Localização no menu: Configurações > Usuários
+   - Defina níveis de permissão para cada usuário
+
+## FLUXO OPERACIONAL DIÁRIO
+--------------------------
+
+1. REGISTRO DE VENDAS
+   - Localização no menu: Vendas > Nova Venda
+   - Processo:
+     a) Selecione o cliente (ou cadastre um novo)
+     b) Adicione os produtos da venda
+     c) Aplique descontos, se necessário
+     d) Selecione a forma de pagamento
+     e) Finalize a venda
+   - O sistema atualiza automaticamente o estoque e o fluxo de caixa
+
+2. GESTÃO FINANCEIRA
+   - Verifique o fluxo de caixa diariamente
+   - Localização no menu: Financeiro > Fluxo de Caixa
+   - Registre outras entradas e saídas não relacionadas a vendas
+   - Importante: Mantenha o caixa sempre atualizado
+
+3. ENTRADA DE NOVOS PRODUTOS
+   - Ao receber novos itens:
+     a) Cadastre o produto (se for novo)
+     b) Atualize o estoque (se já existir)
+   - Localização no menu: Estoque > Entrada de Produtos
+
+4. ANÁLISE DE RELATÓRIOS
+   - Periodicidade recomendada: semanal
+   - Relatórios importantes:
+     * Vendas por período
+     * Produtos mais vendidos
+     * Desempenho por categoria
+     * Fluxo de caixa consolidado
+   - Localização no menu: Relatórios
+
+## DICAS IMPORTANTES
+------------------
+
+1. BACKUP DE DADOS
+   - Realize backups regulares do sistema
+   - Localização no menu: Configurações > Backup
+   - Recomendação: backup semanal, no mínimo
+
+2. INVENTÁRIO FÍSICO
+   - Realize contagem física do estoque mensalmente
+   - Compare com os dados do sistema e ajuste se necessário
+   - Localização no menu: Estoque > Inventário
+
+3. CONFIGURAÇÕES DO SISTEMA
+   - Personalize o sistema conforme suas necessidades
+   - Localização no menu: Configurações
+   - Itens configuráveis: dados da empresa, impostos, aparência, etc.
+
+## SUPORTE E AJUDA
+----------------
+
+Em caso de dúvidas ou problemas:
+- Consulte a documentação online
+- Envie e-mail para suporte@gestorbrecho.com.br
+- Ou ligue para (XX) XXXX-XXXX em horário comercial
+
+---
+Elaborado por: Equipe Gestor de Brechó
+Última atualização: Outubro/2023 

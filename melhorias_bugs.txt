@@ -1,0 +1,126 @@
+---
+# METADADOS PARA PROCESSAMENTO POR IA
+versao: 1.1
+formato: yaml
+linguagem: pt-BR
+dominio: gestao_brecho
+ultima_atualizacao: 2025-05-07T19:28:23-03:00
+contexto_ia:
+  - tipo: gestao_incidentes
+  - complexidade: media
+  - prioridade: alta
+
+# BUGS ORGANIZADOS
+bugs:
+  - id: BUG-001
+    titulo: "Erro de formatação de data nas parcelas"
+    descricao: "Discrepância entre data armazenada e exibida na UI"
+    detalhes_tecnicos:
+      tabela_afetada: pagamentos_prazo.data_vencimento
+      componente_frontend: TabelaParcelas.tsx
+      exemplo:
+        registro: ec41066d-43a4-40e4-b99b-0f732249acce
+        data_banco: 2025-05-05
+        data_exibida: 04/05/2025
+    impacto: confusao_usuario
+    prioridade: alta
+    status: aberto
+    resolucao:
+      passos:
+        1: Verificar conversão de datas no frontend
+        2: Ajustar fuso horário no parser Date
+        3: Adicionar teste unitário de formatação
+
+  - id: BUG-002
+    titulo: "Classificação incorreta de tipo de receita"
+    descricao: "Tipo 'venda' usado para parcelas pagas"
+    detalhes_tecnicos:
+      tabela_afetada: receitas.tipo
+      endpoint_backend: PATCH /api/parcelas/{id}
+      exemplo:
+        parcela: f7f179c5-3b7f-421a-b0b2-50564b86b8d8
+        receita_gerada: 07b33c02-14bd-408a-b152-3e74f9538296
+    impacto: distorcao_relatorios
+    prioridade: critica
+    resolucao:
+      arquivo: src/services/vendaService.ts
+      funcao: updateParcelaStatus
+      alteracao: "setar tipo_receita = 'recebimento_parcela'"
+
+  - id: BUG-003
+    titulo: "Problemas no modal de detalhes do fluxo"
+    componentes_afetados:
+      - FluxoCaixaDetalhesModal.tsx
+      - MovimentoCaixaTable.tsx
+    issues_ui:
+      - coluna: tipo
+        problema: rotulo_ambiguo
+        solucao: renomear para "Origem"
+      - coluna: descricao
+        problema: dados_incompletos
+        solucao: exibir campo completo
+      - coluna: forma_pagamento
+        problema: origem_incorreta
+        solucao: buscar metodo_pagamento_parcela
+
+  - id: BUG-004
+    titulo: "Descrição incompleta em movimentos"
+    descricao: "Cliente não encontrado em registros válidos"
+    detalhes:
+      tabela: movimentos_caixa.descricao
+      relacionamento: vendas -> clientes
+      exemplo:
+        movimento: 0870bc35-41fe-4cb6-9e21-5a814c773a6e
+        cliente: ODTWIN FRITSCHE FILHO
+    resolucao:
+      backend: fluxoCaixaService.ts
+      funcao: criarMovimentoVenda
+      alteracao: "incluir join com tabela clientes"
+
+  - id: BUG-005
+    titulo: "Estrutura HTML inválida"
+    componente: AlertDialog
+    erro: "validateDOMNesting: div dentro de p"
+    localizacao: Vendas.tsx
+    impacto: acessibilidade
+    prioridade: baixa
+    correcao:
+      arquivo: src/pages/Vendas.tsx
+      alteracao: "substituir p por div no AlertDialogDescription"
+
+# FLUXO DE RESOLUÇÃO
+workflow:
+  priorizacao:
+    criterios:
+      - impacto_operacional
+      - complexidade_tecnica
+      - frequencia_ocorrencia
+  etapas:
+    - triagem
+    - reprodução
+    - correção
+    - teste_regressivo
+    - deploy
+
+# DEPENDÊNCIAS TÉCNICAS
+dependencias:
+  frontend:
+    - react-datepicker
+    - @radix-ui/react-alert-dialog
+  backend:
+    - supabase-js v2.39.8
+
+# RECOMENDAÇÕES
+recomendacoes:
+  - implementar_log_erros_frontend
+  - criar_suite_testes_e2e
+  - adicionar_typeguard_zod
+
+# MELHORIAS FUTURAS
+melhorias:
+  - id: MELH-101
+    titulo: "Sistema unificado de tratamento de erros"
+    status: backlog
+  - id: MELH-102  
+    titulo: "Dashboard de monitoramento de bugs"
+    prioridade: media
