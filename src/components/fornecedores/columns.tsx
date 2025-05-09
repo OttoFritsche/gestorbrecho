@@ -161,6 +161,18 @@ export const columns: ColumnDef<Fornecedor>[] = [
     enableHiding: true,
   },
   
+  // Coluna de Estado (UF) - necessária para filtro
+  {
+    accessorKey: "endereco_estado",
+    header: "UF",
+    cell: ({ row }) => {
+      const uf = row.original.endereco_estado as string | undefined;
+      return uf ? <span>{uf}</span> : <span className="text-muted-foreground">-</span>;
+    },
+    enableSorting: true,
+    enableHiding: true, // Pode ser ocultada pelo usuário
+  },
+  
   // Coluna de Ações
   {
     id: "actions",

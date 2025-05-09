@@ -9,7 +9,7 @@ version: 2.0
 formato: yaml
 linguagem: pt-BR
 codificacao: UTF-8
-ultima_atualizacao: 2025-05-07T19:13:01-03:00
+ultima_atualizacao: 2025-05-10T15:30:00-03:00
 contexto_ia:
   - tipo_sistema: gestao_brecho
   - dominio: varejo_moda_sustentavel
@@ -106,6 +106,20 @@ modulos:
     - suporte_contextual
     - integracao_dados
 
+  vendedores:
+    - cadastro_detalhado
+    - perfil_permissoes
+    - comissionamento_dinamico
+    - metas_indicadores
+    - historico_vendas
+
+  fornecedores:
+    - cadastro_completo
+    - documentacao_fiscal
+    - segmentacao_categorias
+    - historico_transacoes
+    - geolocalizacao_regional
+
 # FLUXOS OPERACIONAIS
 fluxos_trabalho:
   cadastro:
@@ -123,6 +137,7 @@ fluxos_trabalho:
     - atualizacao_estoque
     - registro_receita
     - geracao_parcelas
+    - atribuicao_vendedor
 
   gestao_financeira:
     - categorias_financeiras
@@ -130,6 +145,21 @@ fluxos_trabalho:
     - registro_despesas
     - monitoramento_parcelas
     - geracao_relatorios
+    - calculo_comissoes
+
+  gestao_vendedores:
+    - cadastro_vendedor
+    - definicao_perfil_acesso
+    - configuracao_comissoes
+    - acompanhamento_metas
+    - avaliacao_desempenho
+
+  gestao_fornecedores:
+    - cadastro_fornecedor
+    - validacao_documental
+    - acompanhamento_regional
+    - historico_fornecimento
+    - avaliacao_desempenho
 
 # COMPONENTES CRÍTICOS
 servicos_chave:
@@ -142,14 +172,266 @@ servicos_chave:
     - criacao_vendas
     - edicao_vendas
     - cancelamento_vendas
+    - atribuicao_vendedor
 
   financeiro:
     - processamento_recorrencias
     - reconciliacao_fluxo_caixa
+    - calculo_comissionamento
 
   integracao:
     - supabase_client
     - autenticacao
+
+  vendedores:
+    - autenticacao_perfis
+    - gerenciamento_comissoes
+    - acompanhamento_desempenho
+    - restricao_acessos
+    
+  fornecedores:
+    - crud_fornecedores
+    - validacao_fiscal
+    - mapeamento_geografico
+    - avaliacao_qualidade
+
+# MÓDULO DE VENDEDORES
+modulo_vendedores:
+  entidades:
+    vendedor:
+      atributos:
+        - id: uuid
+        - nome: string
+        - cpf: string
+        - data_nascimento: date
+        - endereco_completo: object
+        - contatos: array
+        - data_contratacao: date
+        - status: enum[ativo, inativo, afastado, desligado]
+        - foto_perfil: string
+        - tipo_comissao: enum[fixo, percentual, misto]
+        - percentual_comissao: decimal
+        - valor_fixo_comissao: decimal
+        - nivel_acesso: enum[basico, intermediario, avancado, admin]
+      
+    comissao:
+      atributos:
+        - id: uuid
+        - vendedor_id: uuid
+        - venda_id: uuid
+        - valor_base: decimal
+        - percentual_aplicado: decimal
+        - valor_calculado: decimal
+        - status: enum[pendente, aprovada, paga, estornada]
+        - data_calculo: datetime
+        - data_pagamento: datetime
+      
+    meta_vendedor:
+      atributos:
+        - id: uuid
+        - vendedor_id: uuid
+        - periodo_inicio: date
+        - periodo_fim: date
+        - valor_meta: decimal
+        - quantidade_meta: integer
+        - premio_atingimento: decimal
+        - percentual_atingido: decimal
+        - status: enum[em_andamento, finalizada, cancelada]
+  
+  funcionalidades:
+    cadastro:
+      - formulario_detalhado_vendedor
+      - upload_documentos
+      - configuracao_permissoes_acesso
+      - definicao_parametros_comissao
+    
+    comissionamento:
+      - regras_calculo_dinamicas
+      - parametrizacao_percentuais
+      - visao_consolidada_comissoes
+      - aprovacao_pagamentos
+      - relatorios_comissoes
+    
+    metas:
+      - definicao_metas_periodo
+      - acompanhamento_tempo_real
+      - dashboard_performance
+      - comparativo_vendedores
+      - historico_evolucao
+    
+    desempenho:
+      - indicadores_principais
+      - grafico_evolucao_mensal
+      - ranking_vendedores
+      - taxa_conversao
+      - ticket_medio
+  
+  processos:
+    atribuicao_vendas:
+      - identificacao_vendedor_venda
+      - registro_automatico
+      - validacao_conflitos
+      - bloqueio_alteracoes_indevidas
+    
+    calculo_comissoes:
+      - trigger_pos_venda
+      - aplicacao_regras_negocio
+      - validacao_valores
+      - aprovacao_supervisao
+      - integracao_financeiro
+    
+    pagamento_comissoes:
+      - consolidacao_periodo
+      - validacao_financeira
+      - registro_contabil
+      - comprovante_pagamento
+    
+    monitoramento_desempenho:
+      - coleta_metricas_diarias
+      - calculo_indicadores
+      - atualizacao_dashboard
+      - notificacoes_metas
+      - relatorios_periodicos
+
+# MÓDULO DE FORNECEDORES
+modulo_fornecedores:
+  entidades:
+    fornecedor:
+      atributos:
+        - id: uuid
+        - user_id: uuid
+        - nome_razao_social: string
+        - nome_fantasia: string
+        - cnpj_cpf: string
+        - ie_rg: string
+        - contato_principal: string
+        - telefone: string
+        - email: string
+        - endereco_logradouro: string
+        - endereco_numero: string
+        - endereco_complemento: string
+        - endereco_bairro: string
+        - endereco_cidade: string
+        - endereco_estado: string
+        - endereco_cep: string
+        - observacoes: string
+        - created_at: datetime
+        - updated_at: datetime
+    
+    fornecimento:
+      atributos:
+        - id: uuid
+        - fornecedor_id: uuid
+        - data_fornecimento: date
+        - valor_total: decimal
+        - prazo_pagamento: integer
+        - metodo_pagamento: string
+        - status: enum[pendente, recebido, devolvido, cancelado]
+        - observacoes: string
+    
+    avaliacao_fornecedor:
+      atributos:
+        - id: uuid
+        - fornecedor_id: uuid
+        - data_avaliacao: date
+        - pontuacao: decimal
+        - criterios: object
+        - comentarios: string
+        - avaliador_id: uuid
+  
+  funcionalidades:
+    cadastro:
+      - formulario_completo_fornecedor
+      - validacao_documentos_fiscais
+      - importacao_dados_externos
+      - geolocalizacao_automatica
+    
+    consulta:
+      - filtros_avancados
+      - busca_textual
+      - agrupamento_geografico
+      - exportacao_listagens
+    
+    analise:
+      - historico_fornecimentos
+      - desempenho_pontualidade
+      - qualidade_produtos
+      - comparativos_preco
+    
+    integracao:
+      - verificacao_cnpj
+      - preenchimento_cep_automatico
+      - mapeamento_regional
+  
+  processos:
+    validacao_cadastral:
+      - verificacao_documentos
+      - analise_dados_basicos
+      - classificacao_automatica
+      - aprovacao_cadastro
+    
+    mapeamento_regional:
+      - geolocalizacao
+      - agrupamento_por_uf
+      - visualizacao_mapa
+      - analise_distribuicao
+    
+    avaliacao_qualidade:
+      - registro_criterios
+      - medicao_periodica
+      - feedback_automatico
+      - classificacao_fornecedores
+
+# INTERFACES DE USUÁRIO
+interfaces_vendedores:
+  listagem:
+    - filtros_avancados
+    - busca_textual
+    - exportacao_dados
+    - indicadores_resumidos
+  
+  cadastro:
+    - multistep_form
+    - validacao_tempo_real
+    - preview_dados
+    - upload_documentos
+  
+  desempenho:
+    - graficos_interativos
+    - filtros_temporais
+    - comparativos_periodos
+    - exportacao_relatorios
+  
+  comissoes:
+    - visualizacao_mensal
+    - detalhamento_valores
+    - historico_pagamentos
+    - projecao_periodos
+
+interfaces_fornecedores:
+  listagem:
+    - filtros_avancados
+    - busca_textual
+    - agrupamento_estados
+    - exportacao_dados
+  
+  cadastro:
+    - validacao_tempo_real
+    - preenchimento_automatico
+    - upload_documentos
+    - preview_dados
+  
+  analise:
+    - graficos_distribuicao
+    - mapas_geograficos
+    - historico_interacoes
+    - metricas_desempenho
+  
+  detalhamento:
+    - visualizacao_completa
+    - historico_fornecimentos
+    - timeline_interacoes
+    - download_documentos
 
 # DEPENDÊNCIAS E INTEGRAÇÕES
 dependencias:
@@ -167,6 +449,9 @@ dependencias:
     - shadcn_ui: ^0.5.0
     - tailwind_css: ^3.4.0
     - supabase_js: ^2.39.0
+    - react-hook-form: ^7.46.0
+    - zod: ^3.22.0
+    - recharts: ^2.7.0
 
 # CONFIGURAÇÃO DE AMBIENTE
 ambientes:
@@ -194,6 +479,10 @@ complexidades:
   - processamento_recorrencias
   - gestao_parcelamentos
   - upload_imagens
+  - calculo_comissoes_complexas
+  - controle_acesso_granular
+  - validacao_fiscal_automatizada
+  - geolocalizacao_fornecedores
 
 dividas_tecnicas:
   - todos_identificados: 7
@@ -206,6 +495,10 @@ melhorias_pendentes:
   - implementacao_testes_automatizados
   - remocao_logs_depuracao
   - expansao_recursos_ia
+  - otimizacao_calculo_comissoes
+  - aprimoramento_relatorios_vendedores
+  - integracao_apis_receita_federal
+  - mapa_interativo_fornecedores
 
 # METADADOS DE MANUTENÇÃO
 maintainers:
@@ -216,5 +509,9 @@ maintainers:
 ciclo_atualizacao: semanal
 politica_versoes: semver
 padrao_comunicacao: RESTful
+
+
+
+
 
 

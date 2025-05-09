@@ -91,9 +91,6 @@ const ReceitaFormPage: React.FC = () => {
     },
   });
 
-  // Observar se é recorrente para controle de exibição do campo de frequência
-  const isRecorrente = form.watch('recorrente');
-
   // Busca formas de pagamento
   const { data: formasPagamento = [], isLoading: isLoadingFormas } = useQuery<{ id: string; nome: string }[]>({
     queryKey: ['formasPagamento'],
@@ -123,15 +120,6 @@ const ReceitaFormPage: React.FC = () => {
     }
   }, [isEditing, receitaAtual, form.reset]);
 
-  // Limpar frequência quando desmarca recorrente
-  useEffect(() => {
-    if (!isRecorrente) {
-      form.setValue('frequencia', null);
-    } else if (!form.getValues('frequencia')) {
-      form.setValue('frequencia', 'mensal');
-    }
-  }, [isRecorrente, form]);
-
   // Mutação para adicionar/atualizar
   const mutation = useMutation({
     mutationFn: (data: ReceitaFormInternalData) => {
@@ -141,7 +129,8 @@ const ReceitaFormPage: React.FC = () => {
         data: format(data.data, 'yyyy-MM-dd'),
         forma_pagamento_id: data.forma_pagamento_id || null,
         // Se não for recorrente, a frequência deve ser null
-        frequencia: data.recorrente ? data.frequencia : null,
+        frequencia: null,
+        recorrente: false,
       };
 
       if (isEditing && id) {
@@ -190,7 +179,7 @@ const ReceitaFormPage: React.FC = () => {
         
         {/* Bloco Título/Subtítulo Centralizado */}
         <div className="flex-grow text-center px-4">
-          <h1 className="text-2xl font-bold tracking-tight font-serif text-[#92400e]">{pageTitle}</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">{pageTitle}</h1>
           <p className="text-muted-foreground">{pageDescription}</p>
         </div>
         
@@ -202,249 +191,146 @@ const ReceitaFormPage: React.FC = () => {
       <div className="max-w-3xl mx-auto">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Tipo de Receita */}
-            <FormField
-              control={form.control}
-              name="tipo"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel className="text-sm font-semibold text-gray-700">Tipo de Receita *</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4"
-                    >
-                      {/* Opções de Tipo */}
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="servicos" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Serviços</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="alugueis" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Aluguéis</FormLabel>
-                      </FormItem>
-                       <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="comissao" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Comissão</FormLabel>
-                      </FormItem>
-                       <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="doacao" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Doação</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="outro" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Outro</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Campo Descrição */}
-            <FormField
-              control={form.control}
-              name="descricao"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Consultoria / Aluguel" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Campo Valor */}
-            <FormField
-              control={form.control}
-              name="valor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor *</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">R$</span>
-                      <Input
-                        type="text"
-                        placeholder="0,00"
-                        className="pl-10"
-                        value={formatCurrencyInput(field.value)}
-                        onChange={(e) => {
-                          // Transformar o valor formatado em número
-                          const formatted = e.target.value.replace(/\D/g, '');
-                          const numberValue = parseInt(formatted, 10) / 100 || 0;
-                          field.onChange(numberValue);
-                        }}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Campo Data */}
-            <FormField
-              control={form.control}
-              name="data"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Data *</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
+            {/* Card de Informações Básicas */}
+            <div className="bg-white rounded-lg shadow p-6 border">
+              <h2 className="text-lg font-medium mb-4">Informações da Receita</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Campo Descrição */}
+                <FormField
+                  control={form.control}
+                  name="descricao"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descrição *</FormLabel>
                       <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP", { locale: ptBR })
-                          ) : (
-                            <span>Selecione uma data</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
+                        <Input placeholder="Ex: Consultoria / Aluguel" {...field} />
                       </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Seleção de Categoria */}
-            <FormField
-              control={form.control}
-              name="categoria_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Categoria *</FormLabel>
-                  <FormControl>
-                    <CategoriaSelect
-                      value={field.value}
-                      onChange={field.onChange}
-                      tipo="receita"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Forma de Pagamento */}
-            <FormField
-              control={form.control}
-              name="forma_pagamento_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Forma de Pagamento</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value || undefined}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a forma de pagamento" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {formasPagamento.map((forma) => (
-                        <SelectItem key={forma.id} value={forma.id}>
-                          {forma.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Opção de Receita Recorrente */}
-            <FormField
-              control={form.control}
-              name="recorrente"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 border-t pt-4">
-                  <FormControl>
-                    <Checkbox 
-                      checked={field.value} 
-                      onCheckedChange={field.onChange}
-                      id="recorrente"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel htmlFor="recorrente">Receita Recorrente</FormLabel>
-                    <FormDescription>
-                      Marque esta opção se esta receita se repete regularmente.
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            {/* Frequência - Mostrar apenas se for recorrente */}
-            {isRecorrente && (
-              <FormField
-                control={form.control}
-                name="frequencia"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Frequência de Recorrência *</FormLabel>
-                    <FormDescription>
-                      Com qual frequência essa receita se repete?
-                    </FormDescription>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value || 'mensal'}
-                      value={field.value || 'mensal'}
-                    >
+                {/* Campo Valor */}
+                <FormField
+                  control={form.control}
+                  name="valor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor *</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a frequência" />
-                        </SelectTrigger>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">R$</span>
+                          <Input
+                            type="text"
+                            placeholder="0,00"
+                            className="pl-10"
+                            value={formatCurrencyInput(field.value)}
+                            onChange={(e) => {
+                              // Transformar o valor formatado em número
+                              const formatted = e.target.value.replace(/\D/g, '');
+                              const numberValue = parseInt(formatted, 10) / 100 || 0;
+                              field.onChange(numberValue);
+                            }}
+                          />
+                        </div>
                       </FormControl>
-                      <SelectContent>
-                        {opcoesFrequencia.map((opcao) => (
-                          <SelectItem key={opcao.value} value={opcao.value}>
-                            {opcao.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Campo Data */}
+                <FormField
+                  control={form.control}
+                  name="data"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Data *</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: ptBR })
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Forma de Pagamento */}
+                <FormField
+                  control={form.control}
+                  name="forma_pagamento_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Forma de Pagamento</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value || undefined}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a forma de pagamento" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {formasPagamento.map((forma) => (
+                            <SelectItem key={forma.id} value={forma.id}>
+                              {forma.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Seleção de Categoria */}
+                <FormField
+                  control={form.control}
+                  name="categoria_id"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Categoria *</FormLabel>
+                      <FormControl>
+                        <CategoriaSelect
+                          value={field.value}
+                          onChange={field.onChange}
+                          tipo="receita"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             {/* Botões */}
             <div className="flex justify-end space-x-2">

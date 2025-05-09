@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import { Helmet } from "react-helmet-async";
-import { Calendar as CalendarIcon, Loader2, Search, FileText } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2, Search, FileText, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { getComissoes } from "@/services/comissaoService";
 import { getVendedores } from "@/services/vendedorService";
-import { getVendas } from "@/services/vendaService";
+import { fetchSales } from "@/services/saleService";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -50,6 +51,7 @@ export default function RelatorioComissoesPage() {
   const [dataInicio, setDataInicio] = useState<Date | undefined>(undefined);
   const [dataFim, setDataFim] = useState<Date | undefined>(undefined);
   const [busca, setBusca] = useState<string>("");
+  const navigate = useNavigate();
 
   // Query para buscar vendedores
   const {
@@ -70,7 +72,7 @@ export default function RelatorioComissoesPage() {
     error: errorVendas,
   } = useQuery({
     queryKey: ["vendas"],
-    queryFn: getVendas,
+    queryFn: fetchSales,
   });
 
   // Query para buscar comissões com filtros
@@ -83,14 +85,21 @@ export default function RelatorioComissoesPage() {
   } = useQuery({
     queryKey: [
       "comissoes",
-      { vendedor_id: vendedorId, data_inicio: dataInicio, data_fim: dataFim },
+      {
+        vendedor_id: vendedorId,
+        mes: dataInicio ? dataInicio.getMonth() + 1 : undefined,
+        ano: dataInicio ? dataInicio.getFullYear() : undefined,
+      },
     ],
-    queryFn: () =>
-      getComissoes({
+    queryFn: () => {
+      const mes = dataInicio ? dataInicio.getMonth() + 1 : undefined;
+      const ano = dataInicio ? dataInicio.getFullYear() : undefined;
+      return getComissoes({
         vendedor_id: vendedorId || undefined,
-        data_inicio: dataInicio,
-        data_fim: dataFim,
-      }),
+        mes: mes,
+        ano: ano,
+      });
+    },
   });
 
   // Combinar dados de comissões, vendedores e vendas
@@ -186,15 +195,31 @@ export default function RelatorioComissoesPage() {
       </Helmet>
 
       {/* Cabeçalho */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b w-full">
+        {/* Botão Voltar */}
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => navigate(-1)} 
+          aria-label="Voltar"
+          className="flex-shrink-0" 
+        >
+          <CalendarIcon className="hidden" /> {/* Apenas para manter import, pode remover se não usar */}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </Button>
+        {/* Bloco Título/Subtítulo Centralizado */}
+        <div className="flex-grow text-center px-4"> 
+          <h1 className="text-3xl font-bold font-serif text-[#92400e]">
             Relatório de Comissões
           </h1>
-          <p className="text-muted-foreground">
-            Visualize e analise as comissões calculadas por vendedor e período.
+          <p className="text-muted-foreground mt-1">
+            Visualize as comissões geradas e pagas.
           </p>
         </div>
+        {/* Espaço reservado para manter a centralização */}
+        <div className="w-[40px] flex-shrink-0"></div>
       </div>
 
       {/* Filtros */}
@@ -219,7 +244,6 @@ export default function RelatorioComissoesPage() {
                   <SelectValue placeholder="Todos os vendedores" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os vendedores</SelectItem>
                   {vendedores.map((vendedor) => (
                     <SelectItem key={vendedor.id} value={vendedor.id}>
                       {vendedor.nome}

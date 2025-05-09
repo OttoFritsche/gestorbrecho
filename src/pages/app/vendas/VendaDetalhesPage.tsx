@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useVendaDetalhes } from '@/hooks/useVendaDetalhes'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, CheckCircle, Circle, Clock, AlertCircle, Terminal } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Circle, Clock, AlertCircle, Terminal, Banknote } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -166,8 +166,24 @@ const VendaDetalhesPage = () => {
                label="Valor Total" 
                value={<span className="font-semibold text-base">{formatCurrency(detailedSale.valor_total)}</span>} 
              />
+             <DescriptionListItem 
+               label="Vendedor" 
+               value={detailedSale.vendedor?.nome || 'Não associado'} 
+             />
           </dl>
         </CardContent>
+        {detailedSale.vendedor_id && (
+          <CardFooter className="border-t pt-4 flex justify-end">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 border-[#92400e] text-[#92400e] hover:bg-[#92400e] hover:text-white"
+              onClick={() => navigate(`/app/comissoes/registrar?venda=${detailedSale.id}`)}
+            >
+              <Banknote className="h-4 w-4" />
+              Registrar Comissão
+            </Button>
+          </CardFooter>
+        )}
       </Card>
 
       <Card>

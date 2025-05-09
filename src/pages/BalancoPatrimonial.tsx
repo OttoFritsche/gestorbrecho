@@ -30,9 +30,21 @@ const BalancoPatrimonialPage: React.FC = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex flex-col items-center justify-center mb-6 pb-4 border-b w-full">
-        <h2 className="text-3xl font-bold font-serif text-[#92400e]">Balanço Patrimonial</h2>
-        <p className="text-muted-foreground mt-1">Visualize seus ativos, passivos e patrimônio líquido.</p>
+      <div className="flex items-center justify-between mb-6 pb-4 border-b w-full">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => navigate(-1)} 
+          aria-label="Voltar"
+          className="flex-shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-grow text-center px-4">
+          <h2 className="text-3xl font-bold font-serif text-[#92400e]">Balanço Patrimonial</h2>
+          <p className="text-muted-foreground mt-1">Visualize seus ativos, passivos e patrimônio líquido.</p>
+        </div>
+        <div className="w-[40px] flex-shrink-0"></div>
       </div>
 
       <div className="flex justify-center my-4">

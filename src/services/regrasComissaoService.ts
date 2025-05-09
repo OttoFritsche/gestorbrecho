@@ -1,4 +1,6 @@
-import { supabase } from \'@/integrations/supabase/client\';
+import { supabase } from '@/integrations/supabase/client';
+import { RegraComissao, RegraComissaoInput } from '@/types/comissao';
+import { format } from 'date-fns';
 
 /**
  * Interface que define a estrutura de uma Regra de Comissão.
@@ -6,7 +8,7 @@ import { supabase } from \'@/integrations/supabase/client\';
 export interface RegraComissao {
   id: string;                          // UUID (PK)
   nome: string;                        // TEXT NOT NULL
-  tipo_calculo: \'porcentagem\' | \'valor_fixo\' | \'por_item\' | \'por_categoria\'; // TEXT NOT NULL
+  tipo_calculo: 'porcentagem' | 'valor_fixo' | 'por_item' | 'por_categoria'; // TEXT NOT NULL
   valor: number;                       // DECIMAL NOT NULL
   criterio_aplicacao: Record<string, any> | null; // JSONB
   periodo_vigencia_inicio: string | null; // DATE (formato ISO)
@@ -19,14 +21,29 @@ export interface RegraComissao {
 /**
  * Tipo para criação de uma nova Regra de Comissão.
  */
-export type CreateRegraComissaoData = Omit<RegraComissao, \'id\' | \'created_at\' | \'updated_at\'>;
+export type CreateRegraComissaoData = Omit<RegraComissao, 'id' | 'created_at' | 'updated_at'>;
 
 /**
  * Tipo para atualização de uma Regra de Comissão existente.
  */
 export type UpdateRegraComissaoData = Partial<CreateRegraComissaoData>;
 
-const TABLE_NAME = \'regras_comissao\';
+// Função auxiliar para formatar dados antes de enviar ao Supabase
+const formatDataForSupabase = (data: Partial<RegraComissaoInput>) => {
+  const formattedData = { ...data };
+  // Formata datas (se existirem) para YYYY-MM-DD ou null
+  if (data.periodo_vigencia_inicio) {
+    formattedData.periodo_vigencia_inicio = format(new Date(data.periodo_vigencia_inicio), 'yyyy-MM-dd');
+  } else {
+    formattedData.periodo_vigencia_inicio = null;
+  }
+  if (data.periodo_vigencia_fim) {
+    formattedData.periodo_vigencia_fim = format(new Date(data.periodo_vigencia_fim), 'yyyy-MM-dd');
+  } else {
+    formattedData.periodo_vigencia_fim = null;
+  }
+  return formattedData;
+};
 
 /**
  * @description Busca todas as regras de comissão.
@@ -34,21 +51,16 @@ const TABLE_NAME = \'regras_comissao\';
  * @throws {Error} Se a busca no Supabase falhar.
  */
 export const getRegrasComissao = async (): Promise<RegraComissao[]> => {
-  try {
-    const { data, error } = await supabase
-      .from(TABLE_NAME)
-      .select(\'*\')
-      .order(\'nome\');
+  const { data, error } = await supabase
+    .from('regras_comissao')
+    .select('*')
+    .order('nome', { ascending: true });
 
-    if (error) {
-      console.error(\'Erro ao buscar regras de comissão:\', error);
-      throw new Error(\'Não foi possível buscar as regras de comissão: \' + error.message);
-    }
-    return data as RegraComissao[];
-  } catch (err) {
-    console.error(\'Exceção ao buscar regras de comissão:\', err);
-    throw err instanceof Error ? err : new Error(\'Erro desconhecido ao buscar regras de comissão.\');
+  if (error) {
+    console.error('Erro ao buscar regras de comissão:', error);
+    throw new Error('Falha ao buscar regras de comissão.');
   }
+  return data || [];
 };
 
 /**
@@ -58,28 +70,21 @@ export const getRegrasComissao = async (): Promise<RegraComissao[]> => {
  * @throws {Error} Se o ID for inválido ou a busca no Supabase falhar.
  */
 export const getRegraComissaoById = async (id: string): Promise<RegraComissao | null> => {
-  if (!id || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-    throw new Error(\'ID de regra de comissão inválido.\');
-  }
-  try {
-    const { data, error } = await supabase
-      .from(TABLE_NAME)
-      .select(\'*\')
-      .eq(\'id\', id)
-      .single();
+  if (!id) return null;
+  const { data, error } = await supabase
+    .from('regras_comissao')
+    .select('*)')
+    .eq('id', id)
+    .single();
 
-    if (error) {
-      if (error.code === \'PGRST116\') {
-        return null;
-      }
-      console.error(\`Erro ao buscar regra de comissão ${id}:\`, error);
-      throw new Error(\'Não foi possível buscar a regra de comissão: \' + error.message);
+  if (error) {
+    console.error(`Erro ao buscar regra de comissão ${id}:`, error);
+    if (error.code === 'PGRST116') {
+      throw new Error('Regra de comissão não encontrada.');
     }
-    return data as RegraComissao;
-  } catch (err) {
-    console.error(\`Exceção ao buscar regra de comissão ${id}:\`, err);
-    throw err instanceof Error ? err : new Error(\'Erro desconhecido ao buscar a regra de comissão.\');
+    throw new Error('Falha ao buscar a regra de comissão.');
   }
+  return data;
 };
 
 /**
@@ -88,27 +93,19 @@ export const getRegraComissaoById = async (id: string): Promise<RegraComissao | 
  * @returns {Promise<RegraComissao>} A regra de comissão criada.
  * @throws {Error} Se os dados forem inválidos ou a inserção no Supabase falhar.
  */
-export const createRegraComissao = async (regraData: CreateRegraComissaoData): Promise<RegraComissao> => {
-  if (!regraData || !regraData.nome || !regraData.tipo_calculo || typeof regraData.valor === \'undefined\') {
-    throw new Error(\'Dados insuficientes para criar regra de comissão. Nome, tipo de cálculo e valor são obrigatórios.\');
-  }
+export const createRegraComissao = async (inputData: RegraComissaoInput): Promise<RegraComissao> => {
+  const formattedData = formatDataForSupabase(inputData);
+  const { data, error } = await supabase
+    .from('regras_comissao')
+    .insert(formattedData)
+    .select()
+    .single();
 
-  try {
-    const { data, error } = await supabase
-      .from(TABLE_NAME)
-      .insert([regraData])
-      .select()
-      .single();
-
-    if (error) {
-      console.error(\'Erro ao criar regra de comissão:\', error);
-      throw new Error(\'Não foi possível criar a regra de comissão: \' + error.message);
-    }
-    return data as RegraComissao;
-  } catch (err) {
-    console.error(\'Exceção ao criar regra de comissão:\', err);
-    throw err instanceof Error ? err : new Error(\'Erro desconhecido ao criar a regra de comissão.\');
+  if (error || !data) {
+    console.error('Erro ao criar regra de comissão:', error);
+    throw new Error('Falha ao criar nova regra de comissão.');
   }
+  return data;
 };
 
 /**
@@ -118,37 +115,51 @@ export const createRegraComissao = async (regraData: CreateRegraComissaoData): P
  * @returns {Promise<RegraComissao>} A regra de comissão atualizada.
  * @throws {Error} Se o ID for inválido ou a atualização no Supabase falhar.
  */
-export const updateRegraComissao = async (id: string, regraData: UpdateRegraComissaoData): Promise<RegraComissao> => {
-  if (!id || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-    throw new Error(\'ID de regra de comissão inválido.\');
-  }
-  if (Object.keys(regraData).length === 0) {
-    throw new Error(\'Nenhum dado fornecido para atualização.\');
-  }
+export const updateRegraComissao = async (id: string, inputData: Partial<RegraComissaoInput>): Promise<RegraComissao> => {
+  const formattedData = formatDataForSupabase(inputData);
+  const { data, error } = await supabase
+    .from('regras_comissao')
+    .update({
+      ...formattedData,
+      updated_at: new Date().toISOString() // Garante atualização do timestamp
+    })
+    .eq('id', id)
+    .select()
+    .single();
 
-  try {
-    const { data, error } = await supabase
-      .from(TABLE_NAME)
-      .update({
-        ...regraData,
-        updated_at: new Date().toISOString(),
-      })
-      .eq(\'id\', id)
-      .select()
-      .single();
-
-    if (error) {
-      if (error.code === \'PGRST116\') {
-        throw new Error(\`Regra de comissão com ID ${id} não encontrada para atualização.\`);
-      }
-      console.error(\`Erro ao atualizar regra de comissão ${id}:\`, error);
-      throw new Error(\'Não foi possível atualizar a regra de comissão: \' + error.message);
+  if (error || !data) {
+    console.error(`Erro ao atualizar regra de comissão ${id}:`, error);
+    if (error?.code === 'PGRST116') {
+      throw new Error('Regra de comissão não encontrada para atualização.');
     }
-    return data as RegraComissao;
-  } catch (err) {
-    console.error(\`Exceção ao atualizar regra de comissão ${id}:\`, err);
-    throw err instanceof Error ? err : new Error(\'Erro desconhecido ao atualizar a regra de comissão.\');
+    throw new Error('Falha ao atualizar regra de comissão.');
   }
+  return data;
+};
+
+/**
+ * @description Atualiza o status (ativo/inativo) de uma regra de comissão.
+ * @param {string} id - ID da regra de comissão a ser atualizada.
+ * @param {boolean} ativa - Novo status da regra de comissão.
+ * @returns {Promise<RegraComissao>} A regra de comissão atualizada.
+ * @throws {Error} Se o ID for inválido ou a atualização no Supabase falhar.
+ */
+export const setRegraComissaoStatus = async (id: string, ativa: boolean): Promise<RegraComissao> => {
+  const { data, error } = await supabase
+    .from('regras_comissao')
+    .update({ ativa, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error(`Erro ao ${ativa ? 'ativar' : 'desativar'} regra ${id}:`, error);
+    if (error?.code === 'PGRST116') {
+      throw new Error('Regra de comissão não encontrada.');
+    }
+    throw new Error('Falha ao alterar status da regra de comissão.');
+  }
+  return data;
 };
 
 /**
@@ -159,24 +170,24 @@ export const updateRegraComissao = async (id: string, regraData: UpdateRegraComi
  */
 export const deleteRegraComissao = async (id: string): Promise<void> => {
   if (!id || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-    throw new Error(\'ID de regra de comissão inválido.\');
+    throw new Error('ID de regra de comissão inválido.');
   }
   try {
     const { error } = await supabase
-      .from(TABLE_NAME)
+      .from('regras_comissao')
       .delete()
-      .eq(\'id\', id);
+      .eq('id', id);
 
     if (error) {
-      if (error.code === \'PGRST116\') {
-         console.warn(\`Tentativa de deletar regra de comissão com ID ${id} que não foi encontrada.\`);
+      if (error.code === 'PGRST116') {
+         console.warn(`Tentativa de deletar regra de comissão com ID ${id} que não foi encontrada.`);
          return;
       }
-      console.error(\`Erro ao deletar regra de comissão ${id}:\`, error);
-      throw new Error(\'Não foi possível deletar a regra de comissão: \' + error.message);
+      console.error(`Erro ao deletar regra de comissão ${id}:`, error);
+      throw new Error('Não foi possível deletar a regra de comissão: ' + error.message);
     }
   } catch (err) {
-    console.error(\`Exceção ao deletar regra de comissão ${id}:\`, err);
-    throw err instanceof Error ? err : new Error(\'Erro desconhecido ao deletar a regra de comissão.\');
+    console.error(`Exceção ao deletar regra de comissão ${id}:`, err);
+    throw err instanceof Error ? err : new Error('Erro desconhecido ao deletar a regra de comissão.');
   }
 }; 

@@ -75,7 +75,6 @@ export function DataTableToolbar<TData>({
                 <SelectValue placeholder="Filtrar por UF" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos estados</SelectItem>
                 {estados.map((estado) => (
                   <SelectItem key={estado} value={estado}>
                     {estado}

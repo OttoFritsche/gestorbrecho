@@ -52,16 +52,25 @@ const ClienteFormPage: React.FC = () => {
   // Renderiza o cabeçalho e o formulário
   return (
     <div className="container mx-auto py-6">
-      {/* Botão Voltar foi removido daqui */}
-
-      {/* Cabeçalho centralizado */}
-      <div className="flex flex-col items-center justify-center pb-4 border-b w-full mb-6">
-        <h2 className="text-3xl font-bold font-serif text-[#92400e]">
-            {isEditing ? 'Editar Cliente' : 'Novo Cliente'}
-        </h2>
-        <p className="text-muted-foreground mt-1">
-            {isEditing ? 'Modifique as informações do cliente.' : 'Preencha os dados para cadastrar um novo cliente.'}
-        </p>
+      <div className="flex items-center justify-between pb-4 border-b w-full mb-6">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => navigate(-1)} 
+          aria-label="Voltar"
+          className="flex-shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-grow text-center px-4">
+          <h2 className="text-3xl font-bold font-serif text-[#92400e]">
+              {isEditing ? 'Editar Cliente' : 'Novo Cliente'}
+          </h2>
+          <p className="text-muted-foreground mt-1">
+              {isEditing ? 'Modifique as informações do cliente.' : 'Preencha os dados para cadastrar um novo cliente.'}
+          </p>
+        </div>
+        <div className="w-[40px] flex-shrink-0"></div>
       </div>
 
       {/* Exibe o spinner enquanto carrega os dados para edição */}

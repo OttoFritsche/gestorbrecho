@@ -64,6 +64,13 @@ import { processarReceitasRecorrentes } from './services/receitasRecorrentes';
 // Importação dos componentes de Vendedores
 import VendedoresPage from "./pages/app/vendedores";
 import NovoVendedor from "./pages/app/vendedores/novo";
+// Importação da página de relatório de comissões
+import RelatorioComissoesPage from "@/pages/app/comissoes/relatorio";
+import RegistrarComissaoPage from '@/pages/app/comissoes/registrar';
+// Importação das novas páginas de comissões
+import ComissoesPage from '@/pages/ComissoesPage';
+import RegrasComissaoPage from '@/pages/RegrasComissaoPage';
+import RegraComissaoFormPage from '@/pages/RegraComissaoFormPage';
 
 const queryClient = new QueryClient();
 
@@ -165,6 +172,14 @@ const AppContent = () => {
           <Route path="vendedores" element={<VendedoresPage />} />
           <Route path="vendedores/novo" element={<NovoVendedor />} />
           <Route path="vendedores/:id/editar" element={<NovoVendedor />} />
+          
+          {/* Rotas de comissões */}
+          <Route path="comissoes" element={<ComissoesPage />} />
+          <Route path="comissoes/regras" element={<RegrasComissaoPage />} />
+          <Route path="comissoes/regras/nova" element={<RegraComissaoFormPage />} />
+          <Route path="comissoes/regras/:id/editar" element={<RegraComissaoFormPage />} />
+          <Route path="comissoes/relatorio" element={<RelatorioComissoesPage />} />
+          <Route path="comissoes/registrar" element={<RegistrarComissaoPage />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

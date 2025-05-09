@@ -133,19 +133,19 @@ export default function VendedoresPage() {
       </Helmet>
       
       {/* Cabeçalho */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">Vendedores</h1>
-          <p className="text-muted-foreground">
-            Gerencie os vendedores da sua loja
-          </p>
-        </div>
+      <div className="flex flex-col items-center justify-center mb-6 pb-4 border-b w-full">
+        <h1 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">Vendedores</h1>
+        <p className="text-muted-foreground mt-1 mb-4">
+          Gerencie os vendedores da sua loja
+        </p>
         
-        {/* Botão de adicionar */}
-        <Button onClick={handleAddVendedor} className="bg-[#a16207] hover:bg-[#854d0e] text-white">
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Vendedor
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Botão de adicionar */}
+          <Button onClick={handleAddVendedor} className="bg-[#a16207] hover:bg-[#854d0e] text-white gap-2">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Vendedor
+          </Button>
+        </div>
       </div>
       
       {/* Conteúdo principal */}

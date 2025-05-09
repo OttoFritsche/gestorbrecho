@@ -102,20 +102,31 @@ const MetasPage: React.FC = () => {
   return (
     <div className="container mx-auto py-6">
       {/* Cabeçalho Centralizado Padronizado */}
-      <div className="flex flex-col items-center justify-center pb-4 border-b w-full mb-6">
-        <h2 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">Metas Financeiras</h2>
-        <p className="text-muted-foreground mt-1 mb-4">
-          Defina e acompanhe seus objetivos financeiros.
-        </p>
-        {/* Botão Criar Nova Meta abaixo e estilizado */}
-        <div className="flex items-center gap-2 mt-2">
-          <Button 
-            onClick={() => navigate('/app/metas/nova')}
-            className="bg-[#a16207] hover:bg-[#854d0e] text-white gap-2"
-          >
-            <PlusCircle className="mr-2 h-4 w-4" /> Criar Nova Meta
-          </Button>
+      <div className="flex items-center justify-between pb-4 border-b w-full mb-6">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => navigate(-1)} 
+          aria-label="Voltar"
+          className="flex-shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-grow text-center px-4">
+          <h2 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">Metas Financeiras</h2>
+          <p className="text-muted-foreground mt-1 mb-4">
+            Defina e acompanhe seus objetivos financeiros.
+          </p>
+          <div className="flex items-center gap-2 mt-2 justify-center">
+            <Button 
+              onClick={() => navigate('/app/metas/nova')}
+              className="bg-[#a16207] hover:bg-[#854d0e] text-white gap-2"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Criar Nova Meta
+            </Button>
+          </div>
         </div>
+        <div className="w-[40px] flex-shrink-0"></div>
       </div>
 
       {/* Filtro de Status */}

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Input } from "@/components/ui/input"
+import { TIMEZONE } from "@/lib/constants"
 
 interface DateTimePickerProps {
   date: Date
@@ -30,7 +31,15 @@ export function DateTimePicker({ date, setDate, disabled }: DateTimePickerProps)
       console.log("[DateTimePicker] Data atualizada:", 
         "\n -> Original:", date.toISOString(),
         "\n -> Nova data com hora atualizada:", newDate.toISOString(),
-        "\n -> Hora local:", newDate.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+        "\n -> Hora local (America/Sao_Paulo):", newDate.toLocaleTimeString('pt-BR', { timeZone: TIMEZONE }),
+        "\n -> Data completa local:", newDate.toLocaleDateString('pt-BR', { 
+          timeZone: TIMEZONE,
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
       );
       
       setDate(newDate)

@@ -12,6 +12,8 @@ export interface Vendedor {
   user_id: string | null;         // UUID referência para auth.users
   created_at: string;             // TIMESTAMP WITH TIME ZONE
   updated_at: string;             // TIMESTAMP WITH TIME ZONE
+  status: string;                 // TEXT NOT NULL (ativo, inativo, afastado, desligado)
+  regra_comissao_id?: string | null; // UUID NULL REFERENCES public.regras_comissao(id) - Opcional no frontend
 }
 
 /**
@@ -37,6 +39,34 @@ export const getVendedores = async (): Promise<Vendedor[]> => {
   } catch (error) {
     console.error('Erro ao buscar vendedores:', error);
     throw new Error('Não foi possível buscar os vendedores. Verifique sua conexão ou permissões de acesso.');
+  }
+};
+
+/**
+ * @description Busca todos os vendedores ativos para uso em um Select (id e nome).
+ * @returns Lista de vendedores ativos ({id, nome}) ou null em caso de erro.
+ */
+export const getVendedoresAtivosParaSelect = async (): Promise<{ id: string; nome: string }[]> => {
+  try {
+    // Realiza a busca na tabela 'vendedores'
+    const { data, error } = await supabase
+      .from('vendedores')
+      .select('id, nome')
+      .eq('status', 'ativo') // Filtra por vendedores ativos
+      .order('nome');
+
+    // Verifica se ocorreu erro na consulta
+    if (error) {
+      console.error('Erro ao buscar vendedores ativos para select:', error);
+      throw new Error('Não foi possível buscar os vendedores ativos: ' + error.message);
+    }
+    
+    // Retorna os dados dos vendedores
+    return data as { id: string; nome: string }[];
+  } catch (error) {
+    console.error('Erro ao buscar vendedores ativos para select:', error);
+    // Lançar o erro para que o chamador possa tratar (ex: React Query onError)
+    throw error;
   }
 };
 

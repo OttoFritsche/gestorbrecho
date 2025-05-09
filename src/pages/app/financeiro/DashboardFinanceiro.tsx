@@ -89,11 +89,23 @@ const DashboardFinanceiroPage: React.FC = () => {
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Cabeçalho centralizado (mantido) */}
-      <div className="flex flex-col items-center justify-center pb-4 border-b w-full mb-6">
-        <h2 className="text-3xl font-bold font-serif text-[#92400e]">Dashboard Financeiro</h2>
-        <p className="text-muted-foreground mt-1 mb-4">
-          Sua visão geral financeira em um só lugar.
-        </p>
+      <div className="flex items-center justify-between pb-4 border-b w-full mb-6">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => navigate(-1)} 
+          aria-label="Voltar"
+          className="flex-shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-grow text-center px-4">
+          <h2 className="text-3xl font-bold font-serif text-[#92400e]">Dashboard Financeiro</h2>
+          <p className="text-muted-foreground mt-1 mb-4">
+            Sua visão geral financeira em um só lugar.
+          </p>
+        </div>
+        <div className="w-[40px] flex-shrink-0"></div>
       </div>
 
       {/* Linha 1: Cards - Tentativa 3 (4 colunas, 3 preenchidas) */}

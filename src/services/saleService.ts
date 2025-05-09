@@ -3,32 +3,11 @@ import { toast } from 'sonner'
 import { MovimentoCaixa } from '@/types/financeiro'
 import { updateProduto, getProdutoById, atualizarQuantidadeProduto } from './produtoService'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Sale } from '@/types/sales'
-import { SaleItem } from '@/types/sales'
+import { SaleItemInput, SaleDataInput } from '@/types/sales'
+import { formatInTimeZone } from 'date-fns-tz'
 // Removido SaleWithRelations, pois não é diretamente usada aqui, mas pode ser necessária em tipos
 // Se tipos específicos para Create/Update não existirem, podem ser definidos aqui ou em types/sales
 // Exemplo de tipos inline para clareza (idealmente estariam em types/sales.ts)
-interface SaleItemInput {
-  produto_id?: string | null
-  descricao_manual?: string | null
-  quantidade: number
-  preco_unitario: number
-  subtotal: number
-  user_id: string // Adicionado user_id
-}
-
-interface SaleDataInput {
-  data_venda: string
-  cliente_id: string | null
-  forma_pagamento_id: string | null // Permitir null temporariamente se a lógica permitir
-  categoria_id: string | null // Adicionado categoria_id
-  valor_total: number
-  items: SaleItemInput[]
-  observacoes: string | null
-  user_id: string // Adicionado user_id
-  num_parcelas?: number | null // Ajustado para permitir null
-  primeiro_vencimento?: string | null // Ajustado para permitir null e string
-}
 
 // Lista de nomes de formas de pagamento consideradas "à vista" (entrada imediata no caixa)
 const FORMAS_PAGAMENTO_A_VISTA = ['Dinheiro', 'PIX', 'Cartão de Débito', 'Cartão de Crédito'] // Adicionado Cartão de Crédito
@@ -234,49 +213,39 @@ export const createSale = async (saleData: SaleDataInput) => {
   
   // Se não tiver data, usar a data atual (fallback)
   if (!dataVendaISO) {
-    dataVendaISO = new Date().toISOString();
-    console.log("[createSale] Nenhuma data fornecida, usando data atual:", dataVendaISO);
+    // Formatar a data atual com o fuso horário correto
+    const agora = new Date();
+    dataVendaISO = formatInTimeZone(agora, 'America/Sao_Paulo', "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
+    console.log("[createSale] Nenhuma data fornecida, usando data atual com timezone:", dataVendaISO);
   } else {
     // Importante: NÃO criar um novo Date() aqui, pois perderia o horário escolhido pelo usuário
-    console.log("[createSale] Usando a data/hora fornecida pelo usuário:", dataVendaISO);
+    console.log("[createSale] Usando a data/hora fornecida pelo usuário (com timezone):", dataVendaISO);
   }
   
-  // Calcula a data local em formato YYYY-MM-DD para uso em relatórios
-  // O objeto Date() vai interpretar corretamente o ISO string com timezone
-  const dataVendaObj = new Date(dataVendaISO);
-  const options = { 
-    timeZone: 'America/Sao_Paulo', 
-    year: 'numeric' as const, 
-    month: '2-digit' as const, 
-    day: '2-digit' as const 
-  };
-  const parts = new Intl.DateTimeFormat('en-CA', options).formatToParts(dataVendaObj);
-  const year = parts.find(p => p.type === 'year')?.value;
-  const month = parts.find(p => p.type === 'month')?.value;
-  const day = parts.find(p => p.type === 'day')?.value;
-  const dataVendaLocalStr = `${year}-${month}-${day}`; // Formato YYYY-MM-DD
+  // A partir daqui, dataVendaISO já é uma string ISO 8601 com informação de timezone
+  // O Supabase/PostgreSQL vai interpretar corretamente como timestamptz e armazená-la em UTC
   
   console.log("[createSale - Service] Dados de data processados:",
-    "\n -> data_venda (ISO/UTC):", dataVendaISO,
-    "\n -> data_venda_local (YYYY-MM-DD):", dataVendaLocalStr
+    {
+      data_venda: dataVendaISO,
+      data_venda_local: saleData.data_venda_local, // Adicionado log para data_venda_local
+    }
   );
+
+  const { items, ...saleDetails } = saleData;
+  const saleToInsert = {
+    ...saleDetails,
+    data_venda: dataVendaISO, // Usar a string ISO 8601 com timezone
+    user_id: user.id,
+    // vendedor_id já está em saleDetails se foi passado
+  };
+
+  console.log("[createSale] Objeto da venda a ser inserido (sem itens):", saleToInsert);
 
   // 1. Insere a venda principal
   const { data: vendaResult, error: vendaError } = await supabase
     .from('vendas')
-    .insert({ 
-      data_venda: dataVendaISO, // Timestamp em UTC
-      data_venda_local: dataVendaLocalStr, // Data local (apenas para relatórios)
-      cliente_id: saleData.cliente_id, 
-      forma_pagamento_id: saleData.forma_pagamento_id,
-      categoria_id: saleData.categoria_id,
-      valor_total: saleData.valor_total,
-      observacoes: saleData.observacoes,
-      user_id: saleData.user_id,
-      num_parcelas: saleData.num_parcelas,
-      primeiro_vencimento: saleData.primeiro_vencimento,
-      status: 'pendente'
-    })
+    .insert(saleToInsert)
     .select('id')
     .single();
 
@@ -288,10 +257,10 @@ export const createSale = async (saleData: SaleDataInput) => {
   console.log("[createSale] Venda principal inserida com ID:", newVendaId);
 
   // 2. Insere os itens da venda
-  const itensParaInserir = saleData.items.map(item => ({ 
+  const itensParaInserir = items.map(item => ({ 
     ...item, 
     venda_id: newVendaId,
-    user_id: saleData.user_id // Garante user_id nos itens
+    user_id: user.id // Garante user_id nos itens
   }));
   
   const { error: itensError } = await supabase.from('vendas_items').insert(itensParaInserir);
@@ -330,8 +299,12 @@ export const createSale = async (saleData: SaleDataInput) => {
   // 3. Criar a Receita correspondente
   console.log("[createSale] Criando registro na tabela 'receitas'...");
   try {
+    // Obter apenas a parte da data (YYYY-MM-DD) no fuso horário local
+    const dataObj = new Date(dataVendaISO);
+    const dataVendaLocalStr = formatInTimeZone(dataObj, 'America/Sao_Paulo', 'yyyy-MM-dd');
+    
     const receitaParaInserir = {
-      user_id: saleData.user_id,
+      user_id: user.id,
       descricao: `Receita referente à Venda #${newVendaId.substring(0, 8)}`,
       valor: saleData.valor_total,
       data: dataVendaLocalStr, // Usar a data local da venda (YYYY-MM-DD)
@@ -363,15 +336,18 @@ export const createSale = async (saleData: SaleDataInput) => {
   if (saleData.forma_pagamento_id && FORMAS_PAGAMENTO_A_VISTA.includes(saleData.forma_pagamento_id)) {
     console.log(`[createSale] Forma de pagamento "${saleData.forma_pagamento_id}" é à vista. Registrando no fluxo de caixa...`);
     try {
-      const dataVendaStr = dataVendaLocalStr; // Usa a data local para o fluxo de caixa
-      console.log(` -> Data para movimento de caixa: "${dataVendaStr}" (data local)`);
+      // Obter apenas a parte da data (YYYY-MM-DD) no fuso horário local
+      const dataObj = new Date(dataVendaISO);
+      const dataVendaStr = formatInTimeZone(dataObj, 'America/Sao_Paulo', 'yyyy-MM-dd');
+      
+      console.log(` -> Data para movimento de caixa: "${dataVendaStr}" (data local no formato YYYY-MM-DD)`);
       const movimento: Omit<MovimentoCaixa, 'id' | 'fluxo_caixa_id'> = {
         data: dataVendaStr,
         descricao: `Venda #${newVendaId.substring(0, 8)}`, 
         created_at: new Date().toISOString(), 
         tipo: 'entrada',
         valor: saleData.valor_total,
-        user_id: saleData.user_id,
+        user_id: user.id,
         venda_id: newVendaId,
         forma_pagamento_id: saleData.forma_pagamento_id,
         receita_id: null,
@@ -578,7 +554,7 @@ export const updateSale = async (saleId: string, saleData: SaleDataInput) => {
         categoria_id: saleData.categoria_id,
         valor_total: saleData.valor_total,
         observacoes: saleData.observacoes,
-        user_id: saleData.user_id, 
+        user_id: user.id, 
         num_parcelas: saleData.num_parcelas,
         primeiro_vencimento: saleData.primeiro_vencimento,
         status: 'pendente'
@@ -594,7 +570,7 @@ export const updateSale = async (saleId: string, saleData: SaleDataInput) => {
     const itensParaInserir = saleData.items.map(item => ({ 
       ...item, 
       venda_id: saleId, // Usa o ID da venda existente
-      user_id: saleData.user_id // Garante user_id nos itens
+      user_id: user.id // Garante user_id nos itens
     }));
     
     console.log("Inserindo novos itens:", itensParaInserir);
@@ -641,7 +617,7 @@ export const updateSale = async (saleId: string, saleData: SaleDataInput) => {
                 data_vencimento: dataVencimento.toISOString().split('T')[0],
                 status: 'aguardando',
                 observacoes: `Parcela ${i + 1} de ${numParcelas}`,
-                user_id: saleData.user_id, // Garante user_id nas parcelas
+                user_id: user.id, // Garante user_id nas parcelas
                 forma_pagamento_id: saleData.forma_pagamento_id, // Adicionado
             });
         }
@@ -673,7 +649,7 @@ export const updateSale = async (saleId: string, saleData: SaleDataInput) => {
         try {
           console.log(` -> Data para novo movimento (dataVendaLocalStr): "${dataVendaLocalStr}" (data local)`);
           const movimentoData: Omit<MovimentoCaixa, 'id' | 'fluxo_caixa_id'> = {
-              user_id: saleData.user_id,
+              user_id: user.id,
               data: dataVendaLocalStr,
               tipo: 'entrada',
               valor: saleData.valor_total,
@@ -708,7 +684,7 @@ export const updateSale = async (saleId: string, saleData: SaleDataInput) => {
               console.warn(` -> Data do movimento mudou de ${movimentoExistente.data} para ${saleData.data_venda}. Buscando/Criando novo fluxo_caixa...`);
               data_final = saleData.data_venda;
               try {
-                 fluxo_id_final = await getOrCreateFluxoCaixaId(saleData.data_venda, saleData.user_id);
+                 fluxo_id_final = await getOrCreateFluxoCaixaId(saleData.data_venda, user.id);
                  console.log(` -> Novo fluxo_caixa_id para atualização: ${fluxo_id_final}`);
               } catch (fluxoError) {
                  console.error(" -> Erro ao obter fluxo_id para nova data na atualização. Mantendo antigo.");
@@ -749,7 +725,7 @@ export const updateSale = async (saleId: string, saleData: SaleDataInput) => {
                     
                     // 2. Criar um novo movimento com a data correta
                     const novoMovimento: Omit<MovimentoCaixa, 'id' | 'fluxo_caixa_id'> = {
-                        user_id: saleData.user_id,
+                        user_id: user.id,
                         data: dataVendaLocalStr,
                         tipo: 'entrada',
                         valor: saleData.valor_total,

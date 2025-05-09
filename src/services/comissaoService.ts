@@ -1,4 +1,4 @@
-import { supabase } from \'@/integrations/supabase/client\';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Interface que define a estrutura de um registro de Comissão.
@@ -19,7 +19,7 @@ export interface Comissao {
  * Tipo para criação de um novo registro de Comissão.
  * O campo `data_calculo` pode ser opcional na criação, pois o DB tem default.
  */
-export type CreateComissaoData = Omit<Comissao, \'id\' | \'created_at\' | \'updated_at\' | \'data_calculo\' > & {
+export type CreateComissaoData = Omit<Comissao, 'id' | 'created_at' | 'updated_at' | 'data_calculo' > & {
     data_calculo?: string; // Permite que seja opcional na entrada da função
 };
 
@@ -28,9 +28,9 @@ export type CreateComissaoData = Omit<Comissao, \'id\' | \'created_at\' | \'upda
  * Geralmente, comissões calculadas podem não ser diretamente atualizáveis, 
  * mas incluímos para consistência. A lógica de negócio pode restringir o uso.
  */
-export type UpdateComissaoData = Partial<Omit<Comissao, \'id\' | \'created_at\' | \'updated_at\' | \'data_calculo\'>>;
+export type UpdateComissaoData = Partial<Omit<Comissao, 'id' | 'created_at' | 'updated_at' | 'data_calculo'>>;
 
-const TABLE_NAME = \'comissoes\';
+const TABLE_NAME = 'comissoes';
 
 /**
  * @description Busca todos os registros de comissão.
@@ -40,32 +40,32 @@ const TABLE_NAME = \'comissoes\';
  */
 export const getComissoes = async (filters?: { vendedor_id?: string; venda_id?: string, mes?: number, ano?: number }): Promise<Comissao[]> => {
   try {
-    let query = supabase.from(TABLE_NAME).select(\'*\');
+    let query = supabase.from(TABLE_NAME).select('*');
 
     if (filters?.vendedor_id) {
-      query = query.eq(\'vendedor_id\', filters.vendedor_id);
+      query = query.eq('vendedor_id', filters.vendedor_id);
     }
     if (filters?.venda_id) {
-      query = query.eq(\'venda_id\', filters.venda_id);
+      query = query.eq('venda_id', filters.venda_id);
     }
     if (filters?.ano && filters?.mes) {
         const startDate = new Date(filters.ano, filters.mes - 1, 1).toISOString();
         const endDate = new Date(filters.ano, filters.mes, 0, 23, 59, 59, 999).toISOString();
-        query = query.gte(\'data_calculo\', startDate).lte(\'data_calculo\', endDate);
+        query = query.gte('data_calculo', startDate).lte('data_calculo', endDate);
     }
 
-    query = query.order(\'data_calculo\', { ascending: false });
+    query = query.order('data_calculo', { ascending: false });
     
     const { data, error } = await query;
 
     if (error) {
-      console.error(\'Erro ao buscar comissões:\', error);
-      throw new Error(\'Não foi possível buscar os registros de comissão: \' + error.message);
+      console.error('Erro ao buscar comissões:', error);
+      throw new Error('Não foi possível buscar os registros de comissão: ' + error.message);
     }
     return data as Comissao[];
   } catch (err) {
-    console.error(\'Exceção ao buscar comissões:\', err);
-    throw err instanceof Error ? err : new Error(\'Erro desconhecido ao buscar registros de comissão.\');
+    console.error('Exceção ao buscar comissões:', err);
+    throw err instanceof Error ? err : new Error('Erro desconhecido ao buscar registros de comissão.');
   }
 };
 
@@ -77,26 +77,26 @@ export const getComissoes = async (filters?: { vendedor_id?: string; venda_id?: 
  */
 export const getComissaoById = async (id: string): Promise<Comissao | null> => {
   if (!id || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-    throw new Error(\'ID de comissão inválido.\');
+    throw new Error('ID de comissão inválido.');
   }
   try {
     const { data, error } = await supabase
       .from(TABLE_NAME)
-      .select(\'*\')
-      .eq(\'id\', id)
+      .select('*')
+      .eq('id', id)
       .single();
 
     if (error) {
-      if (error.code === \'PGRST116\') {
+      if (error.code === 'PGRST116') {
         return null;
       }
-      console.error(\`Erro ao buscar comissão ${id}:\`, error);
-      throw new Error(\'Não foi possível buscar o registro de comissão: \' + error.message);
+      console.error(`Erro ao buscar comissão ${id}:`, error);
+      throw new Error('Não foi possível buscar o registro de comissão: ' + error.message);
     }
     return data as Comissao;
   } catch (err) {
-    console.error(\`Exceção ao buscar comissão ${id}:\`, err);
-    throw err instanceof Error ? err : new Error(\'Erro desconhecido ao buscar o registro de comissão.\');
+    console.error(`Exceção ao buscar comissão ${id}:`, err);
+    throw err instanceof Error ? err : new Error('Erro desconhecido ao buscar o registro de comissão.');
   }
 };
 
@@ -107,8 +107,8 @@ export const getComissaoById = async (id: string): Promise<Comissao | null> => {
  * @throws {Error} Se os dados forem inválidos ou a inserção no Supabase falhar.
  */
 export const createComissao = async (comissaoData: CreateComissaoData): Promise<Comissao> => {
-  if (!comissaoData || !comissaoData.venda_id || !comissaoData.vendedor_id || typeof comissaoData.valor_calculado === \'undefined\') {
-    throw new Error(\'Dados insuficientes para criar comissão. Venda ID, Vendedor ID e Valor Calculado são obrigatórios.\');
+  if (!comissaoData || !comissaoData.venda_id || !comissaoData.vendedor_id || typeof comissaoData.valor_calculado === 'undefined') {
+    throw new Error('Dados insuficientes para criar comissão. Venda ID, Vendedor ID e Valor Calculado são obrigatórios.');
   }
 
   try {
@@ -124,13 +124,13 @@ export const createComissao = async (comissaoData: CreateComissaoData): Promise<
       .single();
 
     if (error) {
-      console.error(\'Erro ao criar comissão:\', error);
-      throw new Error(\'Não foi possível criar o registro de comissão: \' + error.message);
+      console.error('Erro ao criar comissão:', error);
+      throw new Error('Não foi possível criar o registro de comissão: ' + error.message);
     }
     return data as Comissao;
   } catch (err) {
-    console.error(\'Exceção ao criar comissão:\', err);
-    throw err instanceof Error ? err : new Error(\'Erro desconhecido ao criar o registro de comissão.\');
+    console.error('Exceção ao criar comissão:', err);
+    throw err instanceof Error ? err : new Error('Erro desconhecido ao criar o registro de comissão.');
   }
 };
 
@@ -144,10 +144,10 @@ export const createComissao = async (comissaoData: CreateComissaoData): Promise<
  */
 export const updateComissao = async (id: string, comissaoData: UpdateComissaoData): Promise<Comissao> => {
   if (!id || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-    throw new Error(\'ID de comissão inválido.\');
+    throw new Error('ID de comissão inválido.');
   }
   if (Object.keys(comissaoData).length === 0) {
-    throw new Error(\'Nenhum dado fornecido para atualização.\');
+    throw new Error('Nenhum dado fornecido para atualização.');
   }
 
   try {
@@ -157,21 +157,21 @@ export const updateComissao = async (id: string, comissaoData: UpdateComissaoDat
         ...comissaoData,
         updated_at: new Date().toISOString(),
       })
-      .eq(\'id\', id)
+      .eq('id', id)
       .select()
       .single();
 
     if (error) {
-      if (error.code === \'PGRST116\') {
-        throw new Error(\`Registro de comissão com ID ${id} não encontrado para atualização.\`);
+      if (error.code === 'PGRST116') {
+        throw new Error(`Registro de comissão com ID ${id} não encontrado para atualização.`);
       }
-      console.error(\`Erro ao atualizar comissão ${id}:\`, error);
-      throw new Error(\'Não foi possível atualizar o registro de comissão: \' + error.message);
+      console.error(`Erro ao atualizar comissão ${id}:`, error);
+      throw new Error('Não foi possível atualizar o registro de comissão: ' + error.message);
     }
     return data as Comissao;
   } catch (err) {
-    console.error(\`Exceção ao atualizar comissão ${id}:\`, err);
-    throw err instanceof Error ? err : new Error(\'Erro desconhecido ao atualizar o registro de comissão.\');
+    console.error(`Exceção ao atualizar comissão ${id}:`, err);
+    throw err instanceof Error ? err : new Error('Erro desconhecido ao atualizar o registro de comissão.');
   }
 };
 
@@ -183,24 +183,24 @@ export const updateComissao = async (id: string, comissaoData: UpdateComissaoDat
  */
 export const deleteComissao = async (id: string): Promise<void> => {
   if (!id || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-    throw new Error(\'ID de comissão inválido.\');
+    throw new Error('ID de comissão inválido.');
   }
   try {
     const { error } = await supabase
       .from(TABLE_NAME)
       .delete()
-      .eq(\'id\', id);
+      .eq('id', id);
 
     if (error) {
-      if (error.code === \'PGRST116\') {
-         console.warn(\`Tentativa de deletar comissão com ID ${id} que não foi encontrada.\`);
+      if (error.code === 'PGRST116') {
+         console.warn(`Tentativa de deletar comissão com ID ${id} que não foi encontrada.`);
          return;
       }
-      console.error(\`Erro ao deletar comissão ${id}:\`, error);
-      throw new Error(\'Não foi possível deletar o registro de comissão: \' + error.message);
+      console.error(`Erro ao deletar comissão ${id}:`, error);
+      throw new Error('Não foi possível deletar o registro de comissão: ' + error.message);
     }
   } catch (err) {
-    console.error(\`Exceção ao deletar comissão ${id}:\`, err);
-    throw err instanceof Error ? err : new Error(\'Erro desconhecido ao deletar o registro de comissão.\');
+    console.error(`Exceção ao deletar comissão ${id}:`, err);
+    throw err instanceof Error ? err : new Error('Erro desconhecido ao deletar o registro de comissão.');
   }
 }; 

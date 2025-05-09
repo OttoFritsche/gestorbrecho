@@ -17,6 +17,7 @@ export const useDateTimeBR = () => {
        * Converte uma data UTC para o fuso horário do Brasil
        */
       toLocalTime: (utcDate: Date | string): Date => {
+        if (!utcDate) return new Date();
         const dateObj = typeof utcDate === 'string' ? parseISO(utcDate) : utcDate;
         return utcToZonedTime(dateObj, TIMEZONE);
       },
@@ -25,6 +26,7 @@ export const useDateTimeBR = () => {
        * Converte uma data no fuso horário Brasil para UTC
        */
       toUTC: (localDate: Date | string): Date => {
+        if (!localDate) return new Date();
         const dateObj = typeof localDate === 'string' ? parseISO(localDate) : localDate;
         return zonedTimeToUtc(dateObj, TIMEZONE);
       },
@@ -36,6 +38,7 @@ export const useDateTimeBR = () => {
        */
       formatDateBR: (date: Date | string, formatStr: string = 'dd/MM/yyyy'): string => {
         try {
+          if (!date) return '-';
           const dateObj = typeof date === 'string' ? parseISO(date) : date;
           const localDate = utcToZonedTime(dateObj, TIMEZONE);
           return format(localDate, formatStr, { locale: ptBR });
@@ -52,6 +55,7 @@ export const useDateTimeBR = () => {
        */
       formatDateTimeBR: (date: Date | string, formatStr: string = 'dd/MM/yyyy HH:mm'): string => {
         try {
+          if (!date) return '-';
           const dateObj = typeof date === 'string' ? parseISO(date) : date;
           const localDate = utcToZonedTime(dateObj, TIMEZONE);
           return format(localDate, formatStr, { locale: ptBR });
@@ -66,11 +70,26 @@ export const useDateTimeBR = () => {
        */
       getLocalDateString: (utcDate: Date | string): string => {
         try {
+          if (!utcDate) return '';
           const dateObj = typeof utcDate === 'string' ? parseISO(utcDate) : utcDate;
-          const localDate = utcToZonedTime(dateObj, TIMEZONE);
-          return format(localDate, 'yyyy-MM-dd');
+          return formatInTimeZone(dateObj, TIMEZONE, 'yyyy-MM-dd');
         } catch (error) {
           console.error('Erro ao extrair data local:', error);
+          return '';
+        }
+      },
+
+      /**
+       * Converte uma data para string ISO 8601 com o timezone do Brasil
+       * Ex: 2024-05-07T21:00:00-03:00
+       */
+      toISOStringWithTZ: (date: Date | string): string => {
+        try {
+          if (!date) return '';
+          const dateObj = typeof date === 'string' ? parseISO(date) : date;
+          return formatInTimeZone(dateObj, TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
+        } catch (error) {
+          console.error('Erro ao converter para ISO com timezone:', error);
           return '';
         }
       },
@@ -80,6 +99,7 @@ export const useDateTimeBR = () => {
        */
       isValidDateString: (dateStr: string, formatStr: string = 'dd/MM/yyyy'): boolean => {
         try {
+          if (!dateStr) return false;
           parse(dateStr, formatStr, new Date());
           return true;
         } catch {

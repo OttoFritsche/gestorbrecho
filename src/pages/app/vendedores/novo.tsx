@@ -90,23 +90,30 @@ export default function NovoVendedor() {
       </Helmet>
       
       {/* Cabeçalho */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate("/app/vendedores")}
-            className="h-8 w-8"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b w-full">
+        {/* Botão Voltar */}
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => navigate("/app/vendedores")} 
+          aria-label="Voltar"
+          className="flex-shrink-0" 
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        
+        {/* Bloco Título/Subtítulo Centralizado */}
+        <div className="flex-grow text-center px-4"> 
+          <h1 className="text-3xl font-bold font-serif text-[#92400e]">
             Novo Vendedor
           </h1>
+          <p className="text-muted-foreground mt-1">
+            Preencha o formulário abaixo para cadastrar um novo vendedor
+          </p>
         </div>
-        <p className="text-muted-foreground">
-          Preencha o formulário abaixo para cadastrar um novo vendedor
-        </p>
+
+        {/* Espaço reservado para manter a centralização */}
+        <div className="w-[40px] flex-shrink-0"></div>
       </div>
       
       {/* Formulário */}

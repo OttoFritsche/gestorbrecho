@@ -25,11 +25,11 @@ import { useFormData } from '@/hooks/useFormData';
 import { formatCurrency, cn } from '@/lib/utils';
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
-import { SaleWithRelations, SaleItem } from '@/types/sales';
+import { SaleWithRelations, SaleItem, SaleItemInput, SaleDataInput } from '@/types/sales';
 import SaleFormItem from '@/components/sales/SaleFormItem';
 import { Categoria } from '@/lib/types/categoria';
 import { getCategorias } from '@/services/categoriaService';
-import { Vendedor, getVendedores } from '@/services/vendedorService';
+import { Vendedor, getVendedoresAtivosParaSelect } from '@/services/vendedorService';
 
 type SaleDisplay = SaleWithRelations & { 
   id?: string;
@@ -79,9 +79,9 @@ const VendaFormPage = (): JSX.Element => {
     isLoading: isLoadingVendedores, 
     isError: isErrorVendedores,
     error: errorVendedores 
-  } = useQuery<Vendedor[], Error>({
-    queryKey: ['vendedores'],
-    queryFn: getVendedores,
+  } = useQuery<{ id: string; nome: string }[], Error>({
+    queryKey: ['vendedoresAtivosSelect'],
+    queryFn: getVendedoresAtivosParaSelect,
     staleTime: 1000 * 60 * 15,
   });
 
@@ -268,7 +268,7 @@ const VendaFormPage = (): JSX.Element => {
     }));
 
     const salePayload: SaleDataInput = {
-      data_venda: formatInTimeZone(dataVenda, 'America/Sao_Paulo', "yyyy-MM-dd\'T\'HH:mm:ssXXX"),
+      data_venda: formatInTimeZone(dataVenda, 'America/Sao_Paulo', "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
       cliente_id: clienteId,
       forma_pagamento_id: formaPagamentoId,
       categoria_id: categoriaId,
@@ -286,11 +286,13 @@ const VendaFormPage = (): JSX.Element => {
     try {
       let result;
       if (isEditing && id) {
-        console.log("[VendaFormPage] Atualizando venda:", id, salePayload);
+        console.log("[VendaFormPage] Atualizando venda:", id);
+        console.log("[VendaFormPage] Data com timezone:", salePayload.data_venda);
         result = await updateSale(id, salePayload);
         toast.success('Venda atualizada com sucesso!');
       } else {
-        console.log("[VendaFormPage] Criando nova venda:", salePayload);
+        console.log("[VendaFormPage] Criando nova venda:");
+        console.log("[VendaFormPage] Data com timezone:", salePayload.data_venda);
         result = await createSale(salePayload);
         toast.success('Venda registrada com sucesso!');
       }
@@ -302,9 +304,13 @@ const VendaFormPage = (): JSX.Element => {
       navigate('/app/vendas');
     } catch (error) {
       console.error("[VendaFormPage] Erro ao salvar venda:", error);
-      if (!(error instanceof Error && submissionErrorHook?.message === error.message)) {
-          toast.error(error instanceof Error ? error.message : "Erro desconhecido ao salvar a venda.");
-      }
+      
+      // Uma forma segura para o TypeScript entender a verificação
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao salvar a venda.";
+      toast.error(errorMessage);
+      
+      // Não precisamos da lógica de comparação com o erro do hook
+      // já que estamos mostrando diretamente o erro capturado
     } finally {
       setIsSubmitting(false);
     }
@@ -326,13 +332,25 @@ const VendaFormPage = (): JSX.Element => {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex flex-col items-center justify-center mb-6 pb-4 border-b w-full"> 
-        <h2 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">
-          {isEditing ? 'Editar Venda' : 'Nova Venda'}
-        </h2>
-        <p className="text-muted-foreground mt-1 mb-4">
-          {isEditing ? 'Modifique os detalhes da venda selecionada.' : 'Registre uma nova venda no sistema.'}
-        </p>
+      <div className="flex items-center justify-between mb-6 pb-4 border-b w-full">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => navigate(-1)} 
+          aria-label="Voltar"
+          className="flex-shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-grow text-center px-4">
+          <h2 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">
+            {isEditing ? 'Editar Venda' : 'Nova Venda'}
+          </h2>
+          <p className="text-muted-foreground mt-1 mb-4">
+            {isEditing ? 'Modifique os detalhes da venda selecionada.' : 'Registre uma nova venda no sistema.'}
+          </p>
+        </div>
+        <div className="w-[40px] flex-shrink-0"></div>
       </div>
 
       <Card>
@@ -396,15 +414,38 @@ const VendaFormPage = (): JSX.Element => {
                   <SelectValue placeholder="Selecione o cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__NONE__">Nenhum (Consumidor Final)</SelectItem> 
+                  <SelectItem value="null">Nenhum (Consumidor)</SelectItem>
                   {clients.map(client => (
-                    <SelectItem key={client.id} value={client.id}>{client.nome}</SelectItem>
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.nome}
+                    </SelectItem>
                   ))}
-                  {clients.length === 0 && !formDataLoading && <SelectItem value="no-client" disabled>Nenhum cliente cadastrado</SelectItem>}
-                  {formDataLoading && <SelectItem value="loading" disabled>Carregando...</SelectItem>}
                 </SelectContent>
               </Select>
             </div>
+
+            <div>
+              <Label htmlFor="vendedor">Vendedor (Opcional)</Label>
+              <Select 
+                value={vendedorId || undefined} 
+                onValueChange={(value) => { setVendedorId(value === 'null' ? null : value); clearErrorOnChange(); }}
+                disabled={isLoadingVendedores}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder={isLoadingVendedores ? "Carregando..." : "Selecionar Vendedor"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="null">Nenhum</SelectItem>
+                  {vendedores.map(vendedor => (
+                    <SelectItem key={vendedor.id} value={vendedor.id}>
+                      {vendedor.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {isErrorVendedores && <p className="text-sm text-red-500 mt-1">Erro ao carregar vendedores.</p>}
+            </div>
+
             <div>
               <label htmlFor="forma-pagamento" className="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
               <Select value={formaPagamentoId || ''} onValueChange={(value) => { setFormaPagamentoId(value); clearErrorOnChange(); }}>
@@ -478,7 +519,6 @@ const VendaFormPage = (): JSX.Element => {
               products={products}
               onUpdate={handleUpdateItem}
               onRemove={handleRemoveItem}
-              isLastItem={index === items.length - 1}
             />
           ))}
           <Button type="button" variant="outline" size="sm" onClick={handleAddItem} className="mt-2">

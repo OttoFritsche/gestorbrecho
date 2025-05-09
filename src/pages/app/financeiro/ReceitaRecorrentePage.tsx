@@ -141,7 +141,7 @@ const ReceitaRecorrentePage: React.FC = () => {
         
         {/* Bloco Título/Subtítulo Centralizado */}
         <div className="flex-grow text-center px-4">
-          <h1 className="text-2xl font-bold tracking-tight font-serif text-[#92400e]">Adicionar Receita Recorrente</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">Adicionar Receita Recorrente</h1>
           <p className="text-muted-foreground">Registre uma receita que se repete regularmente.</p>
         </div>
         
@@ -153,174 +153,174 @@ const ReceitaRecorrentePage: React.FC = () => {
       <div className="max-w-3xl mx-auto">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Campo Descrição */}
-            <FormField
-              control={form.control}
-              name="descricao"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Aluguel de espaço" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Campo Valor */}
-            <FormField
-              control={form.control}
-              name="valor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor *</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">R$</span>
-                      <Input
-                        type="text"
-                        placeholder="0,00"
-                        className="pl-10"
-                        value={formatCurrencyInput(field.value)}
-                        onChange={(e) => {
-                          const formatted = e.target.value.replace(/\D/g, '');
-                          const numberValue = parseInt(formatted, 10) / 100 || 0;
-                          field.onChange(numberValue);
-                        }}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Frequência */}
-            <FormField
-              control={form.control}
-              name="frequencia"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Frequência de Recorrência *</FormLabel>
-                  <FormDescription>
-                    Com qual frequência essa receita se repete?
-                  </FormDescription>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value || 'mensal'}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a frequência" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {opcoesFrequencia.map((opcao) => (
-                        <SelectItem key={opcao.value} value={opcao.value}>
-                          {opcao.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Campo Data */}
-            <FormField
-              control={form.control}
-              name="data"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Data Inicial *</FormLabel>
-                  <FormDescription>
-                    A data de início desta receita recorrente.
-                  </FormDescription>
-                  <Popover>
-                    <PopoverTrigger asChild>
+            {/* Card de Informações Básicas */}
+            <div className="bg-white rounded-lg shadow p-6 border">
+              <h2 className="text-lg font-medium mb-4">Informações da Receita Recorrente</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Campo Descrição */}
+                <FormField
+                  control={form.control}
+                  name="descricao"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descrição *</FormLabel>
                       <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP", { locale: ptBR })
-                          ) : (
-                            <span>Selecione uma data</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
+                        <Input placeholder="Ex: Aluguel de espaço" {...field} />
                       </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Seleção de Categoria */}
-            <FormField
-              control={form.control}
-              name="categoria_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Categoria *</FormLabel>
-                  <FormControl>
-                    <CategoriaSelect
-                      value={field.value}
-                      onChange={field.onChange}
-                      tipo="receita"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* Campo Valor */}
+                <FormField
+                  control={form.control}
+                  name="valor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor *</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">R$</span>
+                          <Input
+                            type="text"
+                            placeholder="0,00"
+                            className="pl-10"
+                            value={formatCurrencyInput(field.value)}
+                            onChange={(e) => {
+                              const formatted = e.target.value.replace(/\D/g, '');
+                              const numberValue = parseInt(formatted, 10) / 100 || 0;
+                              field.onChange(numberValue);
+                            }}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Forma de Pagamento */}
-            <FormField
-              control={form.control}
-              name="forma_pagamento_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Forma de Pagamento</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value || undefined}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a forma de pagamento" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {formasPagamento.map((forma) => (
-                        <SelectItem key={forma.id} value={forma.id}>
-                          {forma.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* Frequência */}
+                <FormField
+                  control={form.control}
+                  name="frequencia"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Frequência de Recorrência *</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value || 'mensal'}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a frequência" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {opcoesFrequencia.map((opcao) => (
+                            <SelectItem key={opcao.value} value={opcao.value}>
+                              {opcao.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Campo Data */}
+                <FormField
+                  control={form.control}
+                  name="data"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Data Inicial *</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: ptBR })
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Forma de Pagamento */}
+                <FormField
+                  control={form.control}
+                  name="forma_pagamento_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Forma de Pagamento</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value || undefined}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a forma de pagamento" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {formasPagamento.map((forma) => (
+                            <SelectItem key={forma.id} value={forma.id}>
+                              {forma.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Seleção de Categoria */}
+                <FormField
+                  control={form.control}
+                  name="categoria_id"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Categoria *</FormLabel>
+                      <FormControl>
+                        <CategoriaSelect
+                          value={field.value}
+                          onChange={field.onChange}
+                          tipo="receita"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             {/* Botões */}
             <div className="flex justify-end space-x-2">

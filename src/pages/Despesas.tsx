@@ -160,40 +160,50 @@ const DespesasPage: React.FC = () => {
   return (
     <div className="container mx-auto py-8">
       {/* Cabeçalho centralizado com botões abaixo */}
-      <div className="flex flex-col items-center justify-center mb-6 pb-4 border-b w-full">
-        <h2 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">Despesas</h2>
-        <p className="text-muted-foreground mt-1 mb-4">
-          Gerencie as despesas do seu brechó.
-        </p>
-        
-        {/* Botões de ação abaixo do título */}
-        <div className="flex items-center gap-2 mt-2">
-          {selectedDespesas.size > 0 && (
-            <Button
-              variant="destructive"
-              onClick={() => openDeleteConfirmation()}
-              className="gap-2"
+      <div className="flex items-center justify-between mb-6 pb-4 border-b w-full">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => navigate(-1)} 
+          aria-label="Voltar"
+          className="flex-shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-grow text-center px-4">
+          <h2 className="text-3xl font-bold tracking-tight font-serif text-[#92400e]">Despesas</h2>
+          <p className="text-muted-foreground mt-1 mb-4">
+            Gerencie as despesas do seu brechó.
+          </p>
+          <div className="flex items-center gap-2 mt-2 justify-center">
+            {selectedDespesas.size > 0 && (
+              <Button
+                variant="destructive"
+                onClick={() => openDeleteConfirmation()}
+                className="gap-2"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir ({selectedDespesas.size})
+              </Button>
+            )}
+            <Button 
+              onClick={() => navigate('/app/despesas/nova')} 
+              className="bg-[#a16207] hover:bg-[#854d0e] text-white gap-2"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir ({selectedDespesas.size})
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Adicionar Despesa
             </Button>
-          )}
-          <Button 
-            onClick={() => navigate('/app/despesas/nova')} 
-            className="bg-[#a16207] hover:bg-[#854d0e] text-white gap-2"
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Adicionar Despesa
-          </Button>
-          <Button 
-            onClick={() => navigate('/app/despesas/recorrente')} 
-            variant="outline"
-            className="border-[#a16207] text-[#a16207] hover:bg-amber-50 gap-2"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Despesa Recorrente
-          </Button>
+            <Button 
+              onClick={() => navigate('/app/despesas/recorrente')} 
+              variant="outline"
+              className="border-[#a16207] text-[#a16207] hover:bg-amber-50 gap-2"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Despesa Recorrente
+            </Button>
+          </div>
         </div>
+        <div className="w-[40px] flex-shrink-0"></div>
       </div>
 
       {/* Feedback de Carregamento e Erro */}

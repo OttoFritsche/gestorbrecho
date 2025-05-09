@@ -1,23 +1,6 @@
 import React from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  CreditCard, 
-  CircleDollarSign,
-  ShoppingBasket, 
-  Package, 
-  Users, 
-  Tags, 
-  Settings, 
-  LogOut,
-  Bot,
-  MessagesSquare,
-  BarChart2,
-  DollarSign,
-  ShoppingCart,
-  Truck,
-  UserRound
-} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -27,28 +10,24 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarTrigger,
-  SidebarGroup,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import logoImage from '@/assets/logo/5.png';
 import { useIA } from '@/contexts/IAContext';
+import { sidebarNavItems } from '@/config/sidebarNavItems';
+import { SidebarNavItem } from './SidebarNavItem';
 
 const AppSidebar = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
   const { toggleChat } = useIA();
+  const { state } = useSidebar(); // Acessa o estado do sidebar
+  const isCollapsed = state === "collapsed";
   
-  // Função helper para verificar rota ativa
-  const isActive = (path) => {
-    return location.pathname.startsWith(path);
-  };
-
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -63,6 +42,20 @@ const AppSidebar = () => {
     }
   };
 
+  // Processar os itens para garantir que cada item pai com filhos tenha um hrefCollapsed definido
+  const processedNavItems = React.useMemo(() => {
+    return sidebarNavItems.map(item => {
+      // Se é um item pai com filhos e não tem hrefCollapsed definido, use o href do primeiro filho
+      if (item.children && item.children.length > 0 && !item.hrefCollapsed) {
+        return {
+          ...item,
+          hrefCollapsed: item.children[0].href || item.href
+        };
+      }
+      return item;
+    });
+  }, [sidebarNavItems]);
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
@@ -76,198 +69,40 @@ const AppSidebar = () => {
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="py-2">
-        <SidebarMenu>
-          {/* Dashboard */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink 
-                to="/app" 
-                className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
-                end
-              >
-                <LayoutDashboard />
-                <span>Dashboard</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          {/* Categorias */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink 
-                to="/app/categorias" 
-                className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
-              >
-                <Tags />
-                <span>Categorias</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          {/* Produtos */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink 
-                to="/app/estoque" 
-                className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
-              >
-                <Package />
-                <span>Produtos</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          {/* Fornecedores */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink 
-                to="/app/fornecedores" 
-                className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
-              >
-                <Truck />
-                <span>Fornecedores</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          {/* Clientes */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink 
-                to="/app/clientes" 
-                className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
-              >
-                <Users />
-                <span>Clientes</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          {/* Vendedores */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink 
-                to="/app/vendedores" 
-                className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
-              >
-                <UserRound />
-                <span>Vendedores</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          {/* Vendas */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink 
-                to="/app/vendas" 
-                className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
-              >
-                <ShoppingCart />
-                <span>Vendas</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          {/* Financeiro */}
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              asChild
-              isActive={isActive("/app/financeiro") || isActive("/app/receitas") || isActive("/app/metas")}
-            >
-              <NavLink to="/app/financeiro">
-                <DollarSign />
-                <span>Financeiro</span>
-              </NavLink>
-            </SidebarMenuButton>
-            <SidebarMenuSub>
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton asChild>
-                  <NavLink to="/app/receitas" className={({ isActive }) => isActive ? 'data-[active=true]' : ''}>
-                    <span>Receitas</span>
-                  </NavLink>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton asChild>
-                  <NavLink to="/app/despesas" className={({ isActive }) => isActive ? 'data-[active=true]' : ''}>
-                    <span>Despesas</span>
-                  </NavLink>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton asChild>
-                  <NavLink to="/app/fluxo-caixa" className={({ isActive }) => isActive ? 'data-[active=true]' : ''}>
-                    <span>Fluxo de Caixa</span>
-                  </NavLink>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton asChild>
-                  <NavLink to="/app/metas" className={({ isActive }) => isActive ? 'data-[active=true]' : ''}>
-                    <span>Metas</span>
-                  </NavLink>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-            </SidebarMenuSub>
-          </SidebarMenuItem>
-          
-          {/* Relatórios */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink 
-                to="/app/relatorios" 
-                className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
-              >
-                <BarChart2 />
-                <span>Relatórios</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          {/* Assistente IA */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink 
-                to="/app/assistente" 
-                className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
-              >
-                <MessagesSquare className="text-amber-500" />
-                <span>Assistente de IA</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          {/* Chat rápido */}
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={toggleChat}>
-              <Bot className="text-amber-500" />
-              <span>Chat Rápido</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          {/* Configurações */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink 
-                to="/app/configuracoes" 
-                className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
-              >
-                <Settings />
-                <span>Configurações</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarContent className="py-2 flex-1 flex flex-col">
+        <ScrollArea className="flex-1"> {/* Uso de flex-1 para preencher o espaço disponível */}
+          <SidebarMenu className="px-2">
+            {processedNavItems.map((item) => (
+              <SidebarMenuItem key={item.label} className="mb-1">
+                <SidebarNavItem 
+                  item={{
+                    ...item,
+                    // Substitui a função onClick vazia pelo toggleChat para o item "Chat Rápido"
+                    ...(item.label === "IA & Suporte" && item.children 
+                      ? {
+                          children: item.children.map(child => 
+                            child.label === "Chat Rápido" 
+                              ? { ...child, onClick: toggleChat } 
+                              : child
+                          )
+                        } 
+                      : {})
+                  }} 
+                  toggleChat={toggleChat}
+                />
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </ScrollArea>
       </SidebarContent>
       
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 mt-auto">
+        <Separator className="mb-4" />
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout}>
-              <LogOut />
-              <span>Sair</span>
+            <SidebarMenuButton onClick={handleLogout} className="w-full justify-start">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>{isCollapsed ? "" : "Sair"}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
