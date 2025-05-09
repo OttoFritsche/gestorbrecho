@@ -10,8 +10,9 @@ export interface SQLQueryResult {
   error?: string;
 }
 
-// Endpoint do n8n (será configurado posteriormente)
-const N8N_API_ENDPOINT = import.meta.env.VITE_N8N_API_ENDPOINT || 'http://localhost:5678/webhook/ia-chat';
+// Endpoint do n8n (webhook URL)
+//const N8N_API_ENDPOINT = 'https://ottofritsche.app.n8n.cloud/webhook/c325c91a-ed02-4d56-8f31-2c1c986f0bbb';//
+const N8N_API_ENDPOINT = 'https://ottofritsche.app.n8n.cloud/webhook-test/c325c91a-ed02-4d56-8f31-2c1c986f0bbb';
 
 // Flag para ativar o modo de simulação em desenvolvimento
 const USE_SIMULATION = true;
@@ -27,37 +28,12 @@ export const sendMessageToIA = async (
   chatHistory: ChatMessage[]
 ): Promise<{ content: string; error?: string }> => {
   try {
-    // No ambiente de desenvolvimento, simule uma resposta
-    if (process.env.NODE_ENV === 'development' || USE_SIMULATION) {
-      console.log('Simulando resposta da IA para:', message);
-      
-      // Aguardar um tempo para simular o processamento
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Gerar resposta simulada baseada no conteúdo da mensagem
-      let simulatedResponse = '';
-      
-      if (message.toLowerCase().includes('venda')) {
-        simulatedResponse = 'Suas vendas têm sido consistentes nos últimos meses. O total de vendas do mês atual é 15% maior que o mês anterior. Aqui está uma análise rápida dos últimos 3 meses:\n\n- Mês atual: R$ 15.780,00\n- Mês anterior: R$ 13.700,00\n- Dois meses atrás: R$ 12.450,00\n\nOs produtos mais vendidos foram roupas femininas (65%), seguido por acessórios (20%).';
-      } else if (message.toLowerCase().includes('estoque')) {
-        simulatedResponse = 'Você tem 157 itens em estoque. As categorias mais representativas são: Roupas (65%), Acessórios (20%) e Calçados (15%).\n\nItens com baixo estoque (menos de 5 unidades):\n- Vestidos de Verão: 3 unidades\n- Calças Jeans Premium: 4 unidades\n- Bolsas de Couro: 2 unidades';
-      } else if (message.toLowerCase().includes('cliente')) {
-        simulatedResponse = 'Você tem 78 clientes registrados. Os 5 clientes mais frequentes são:\n\n1. Maria Silva - 12 compras (R$ 2.450,00)\n2. João Pereira - 8 compras (R$ 1.780,00)\n3. Ana Costa - 7 compras (R$ 1.350,00)\n4. Carlos Santos - 6 compras (R$ 1.120,00)\n5. Juliana Lima - 5 compras (R$ 980,00)';
-      } else if (message.toLowerCase().includes('lucro') || message.toLowerCase().includes('financ')) {
-        simulatedResponse = 'Resumo financeiro dos últimos 3 meses:\n\n- Receitas: R$ 41.930,00\n- Despesas: R$ 28.540,00\n- Lucro: R$ 13.390,00\n\nMargens de lucro por categoria:\n- Roupas: 38%\n- Acessórios: 45%\n- Calçados: 30%';
-      } else {
-        simulatedResponse = `Olá! Estou aqui para ajudar com a gestão do seu brechó. Você pode me perguntar sobre vendas, estoque, clientes, finanças e mais. Alguns exemplos:\n\n- "Quais foram as vendas do último mês?"\n- "Quais produtos estão com estoque baixo?"\n- "Quem são meus clientes mais ativos?"\n- "Qual foi meu lucro recente?"`;
-      }
-      
-      return { content: simulatedResponse };
-    }
+    // Obter o usuário atual para incluir o ID (mesmo em simulação)
+    const userId = process.env.NODE_ENV === 'development' || USE_SIMULATION 
+      ? "mock-user-id" 
+      : (await supabase.auth.getSession()).data.session?.user.id;
 
-    // Obter o usuário atual e o token de acesso
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
+    if (!userId) {
       return {
         content: '',
         error: 'Usuário não autenticado. Por favor, faça login novamente.',
@@ -66,42 +42,77 @@ export const sendMessageToIA = async (
 
     // Preparar os dados para enviar ao n8n
     const payload = {
-      message,
-      // Enviar apenas as últimas 10 mensagens para manter o contexto sem sobrecarregar
-      history: chatHistory.slice(-10).map(msg => ({
+      idCliente: userId,
+      mensagem: message,
+      // Enviar apenas as últimas 5 mensagens para manter o contexto sem sobrecarregar
+      historico: chatHistory.slice(-5).map(msg => ({
         role: msg.role,
         content: msg.content,
       })),
-      // Incluir o token para autenticação no n8n
-      accessToken: session.access_token,
     };
 
-    // Chamada real à API do n8n
-    const response = await fetch(N8N_API_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    // Chamada à API do n8n
+    try {
+      console.log('Enviando mensagem para o webhook n8n:', N8N_API_ENDPOINT);
+      
+      const response = await fetch(N8N_API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
-    // Verifica se a resposta foi bem-sucedida
-    if (!response.ok) {
-      throw new Error(`Falha na chamada à API: ${response.status}`);
+      // Verifica se a resposta foi bem-sucedida
+      if (!response.ok) {
+        throw new Error(`Falha na chamada ao webhook: ${response.status}`);
+      }
+
+      // Parse da resposta
+      const data = await response.json();
+      
+      // Se estamos em produção, salvar a interação no banco
+      if (!(process.env.NODE_ENV === 'development' || USE_SIMULATION)) {
+        await saveMessageToHistory({
+          user_id: userId,
+          user_message: message,
+          assistant_message: data.resposta || data.response || "Sem resposta",
+          created_at: new Date().toISOString(),
+        });
+      }
+
+      return { content: data.resposta || data.response || "Recebi sua mensagem, mas não consegui processar uma resposta." };
+    } catch (webhookError) {
+      console.error('Erro ao chamar webhook n8n:', webhookError);
+      
+      // Se estamos em modo de simulação, vamos usar a resposta simulada como fallback
+      if (process.env.NODE_ENV === 'development' || USE_SIMULATION) {
+        console.log('Fallback: Usando resposta simulada após falha do webhook');
+        
+        // Aguardar um tempo para simular o processamento
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Gerar resposta simulada baseada no conteúdo da mensagem
+        let simulatedResponse = '';
+        
+        if (message.toLowerCase().includes('venda')) {
+          simulatedResponse = 'Suas vendas têm sido consistentes nos últimos meses. O total de vendas do mês atual é 15% maior que o mês anterior. Aqui está uma análise rápida dos últimos 3 meses:\n\n- Mês atual: R$ 15.780,00\n- Mês anterior: R$ 13.700,00\n- Dois meses atrás: R$ 12.450,00\n\nOs produtos mais vendidos foram roupas femininas (65%), seguido por acessórios (20%).';
+        } else if (message.toLowerCase().includes('estoque')) {
+          simulatedResponse = 'Você tem 157 itens em estoque. As categorias mais representativas são: Roupas (65%), Acessórios (20%) e Calçados (15%).\n\nItens com baixo estoque (menos de 5 unidades):\n- Vestidos de Verão: 3 unidades\n- Calças Jeans Premium: 4 unidades\n- Bolsas de Couro: 2 unidades';
+        } else if (message.toLowerCase().includes('cliente')) {
+          simulatedResponse = 'Você tem 78 clientes registrados. Os 5 clientes mais frequentes são:\n\n1. Maria Silva - 12 compras (R$ 2.450,00)\n2. João Pereira - 8 compras (R$ 1.780,00)\n3. Ana Costa - 7 compras (R$ 1.350,00)\n4. Carlos Santos - 6 compras (R$ 1.120,00)\n5. Juliana Lima - 5 compras (R$ 980,00)';
+        } else if (message.toLowerCase().includes('lucro') || message.toLowerCase().includes('financ')) {
+          simulatedResponse = 'Resumo financeiro dos últimos 3 meses:\n\n- Receitas: R$ 41.930,00\n- Despesas: R$ 28.540,00\n- Lucro: R$ 13.390,00\n\nMargens de lucro por categoria:\n- Roupas: 38%\n- Acessórios: 45%\n- Calçados: 30%';
+        } else {
+          simulatedResponse = `Olá! Estou aqui para ajudar com a gestão do seu brechó. Você pode me perguntar sobre vendas, estoque, clientes, finanças e mais. Alguns exemplos:\n\n- "Quais foram as vendas do último mês?"\n- "Quais produtos estão com estoque baixo?"\n- "Quem são meus clientes mais ativos?"\n- "Qual foi meu lucro recente?"`;
+        }
+        
+        return { content: simulatedResponse };
+      } else {
+        // Em produção, retornamos um erro para o usuário
+        throw webhookError;
+      }
     }
-
-    // Parse da resposta
-    const data = await response.json();
-    
-    // Salvar a interação no histórico do banco de dados
-    await saveMessageToHistory({
-      user_id: session.user.id,
-      user_message: message,
-      assistant_message: data.response,
-      created_at: new Date().toISOString(),
-    });
-
-    return { content: data.response };
   } catch (error) {
     console.error('Erro ao enviar mensagem para a IA:', error);
     return {
