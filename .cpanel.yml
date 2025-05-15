@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYDIR=/home/odtwin49/public_html/  # AJUSTE SE NECESSÁRIO
+    - /bin/npm install
+    - /bin/npm run build
+    - /bin/cp -R dist/* $DEPLOYDIR
+    - /bin/cp .htaccess $DEPLOYDIR # Descomente se você tiver um .htaccess para SPA 
