@@ -11,11 +11,11 @@ export interface SQLQueryResult {
 }
 
 // Endpoint do n8n (webhook URL)
-//const N8N_API_ENDPOINT = 'https://ottofritsche.app.n8n.cloud/webhook/c325c91a-ed02-4d56-8f31-2c1c986f0bbb';//
-const N8N_API_ENDPOINT = 'https://ottofritsche.app.n8n.cloud/webhook-test/c325c91a-ed02-4d56-8f31-2c1c986f0bbb';
+//const N8N_API_ENDPOINT = 'https://ottofritsche.app.n8n.cloud/webhook/1b8afc22-e68b-4243-b588-0e42ba7ca9f3';//
+const N8N_API_ENDPOINT = 'https://ottofritsche.app.n8n.cloud/webhook/brecho';
 
 // Flag para ativar o modo de simulação em desenvolvimento
-const USE_SIMULATION = true;
+const USE_SIMULATION = false;
 
 /**
  * Envia uma mensagem para o backend (n8n) e retorna a resposta
@@ -29,7 +29,7 @@ export const sendMessageToIA = async (
 ): Promise<{ content: string; error?: string }> => {
   try {
     // Obter o usuário atual para incluir o ID (mesmo em simulação)
-    const userId = process.env.NODE_ENV === 'development' || USE_SIMULATION 
+    const userId = USE_SIMULATION 
       ? "mock-user-id" 
       : (await supabase.auth.getSession()).data.session?.user.id;
 

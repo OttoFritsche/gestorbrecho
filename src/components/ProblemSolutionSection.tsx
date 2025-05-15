@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Boxes, ClipboardCheck, Users, UsersRound, Tag, Sparkles, Calculator, BarChart } from "lucide-react";
+import { InterestModalForm } from '@/components/landing/InterestModalForm';
 
 const ProblemSolutionSection = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const items = [
     {
       problem: "Dificuldade em controlar entrada e saída de peças",
@@ -65,11 +68,16 @@ const ProblemSolutionSection = () => {
         </div>
 
         <div className="text-center mt-12 md:mt-16">
-          <Button className="bg-amber-800 hover:bg-amber-700 text-white opacity-0 animate-fade-in-delay-2">
-            Conheça a Solução Completa
+          <Button 
+            onClick={() => setIsModalOpen(true)} 
+            className="bg-amber-800 hover:bg-amber-700 text-white opacity-0 animate-fade-in-delay-2"
+          >
+            Tenho Interesse
           </Button>
         </div>
       </div>
+
+      <InterestModalForm open={isModalOpen} onOpenChange={setIsModalOpen} />
     </div>
   );
 };

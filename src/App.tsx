@@ -2,8 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -71,6 +71,8 @@ import RegistrarComissaoPage from '@/pages/app/comissoes/registrar';
 import ComissoesPage from '@/pages/ComissoesPage';
 import RegrasComissaoPage from '@/pages/RegrasComissaoPage';
 import RegraComissaoFormPage from '@/pages/RegraComissaoFormPage';
+// Adicionar importação do WelcomeModal
+import { WelcomeModal } from '@/components/auth/WelcomeModal';
 
 const queryClient = new QueryClient();
 
@@ -93,21 +95,109 @@ const IAComponents = () => {
 };
 
 const AppContent = () => {
-  // Processa as receitas recorrentes ao iniciar o app (apenas uma vez)
+  const navigate = useNavigate();
+  const location = useLocation(); // Corrigido para usar o hook importado
+
+  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ id: string; onboarding_concluido: boolean } | null>(null);
+
   useEffect(() => {
-    // Executa o processamento apenas se o usuário estiver autenticado
-    const checkAuth = async () => {
-      const { data: { session } } = await import('@/integrations/supabase/client').then(m => m.supabase.auth.getSession());
-      if (session) {
-        // Espera 2 segundos para não impactar a inicialização inicial
-        setTimeout(() => {
-          processarReceitasRecorrentes().catch(console.error);
-        }, 2000);
+    // Processa as receitas recorrentes ao iniciar o app (apenas uma vez)
+    // Espera 2 segundos para não impactar a inicialização inicial
+    const timer = setTimeout(() => {
+      processarReceitasRecorrentes().catch(console.error);
+    }, 2000);
+
+    // Listener para mudanças no estado de autenticação
+    const checkAuthAndOnboarding = async (session: any) => { // session pode ser null
+      // console.log("Onboarding Check: Auth state changed. Session:", session);
+
+      if (session && session.user) {
+        // console.log("Onboarding Check: User ID:", session.user.id);
+
+        // Buscar perfil do usuário
+        const supabaseClient = await import('@/integrations/supabase/client').then(m => m.supabase);
+        const { data: profile, error: profileError } = await supabaseClient
+          .from('profiles')
+          .select('id, onboarding_concluido')
+          .eq('id', session.user.id)
+          .single();
+
+        // console.log("Onboarding Check: Profile data:", profile);
+        // console.log("Onboarding Check: Profile error:", profileError);
+
+        if (profileError) {
+          console.error("Onboarding Check: Error fetching profile:", profileError);
+          setUserProfile(null); // Limpa o perfil em caso de erro
+          setIsWelcomeModalOpen(false); // Garante que o modal não abra
+          return;
+        }
+
+        if (profile) {
+          setUserProfile(profile);
+          // Verificar se o onboarding já foi concluído
+          if (!profile.onboarding_concluido) {
+            // console.log("Onboarding Check: Onboarding NOT completed. Opening modal.");
+            setIsWelcomeModalOpen(true);
+          } else {
+            // console.log("Onboarding Check: Onboarding already completed.");
+            setIsWelcomeModalOpen(false);
+          }
+        } else {
+          // Isso pode acontecer se o perfil ainda não foi criado, embora o usuário exista no auth.users
+          // Ou se houver algum problema com RLS impedindo a leitura.
+          console.warn("Onboarding Check: Profile not found for user ID:", session.user.id);
+          setUserProfile(null);
+          setIsWelcomeModalOpen(false);
+        }
+      } else {
+        // console.log("Onboarding Check: No active session or user.");
+        setUserProfile(null); // Limpa o perfil se não houver sessão
+        setIsWelcomeModalOpen(false); // Fecha o modal se não houver sessão
       }
     };
-    
-    checkAuth();
-  }, []);
+
+    // Imediatamente verifica a sessão atual ao carregar
+    import('@/integrations/supabase/client').then(async m => {
+      const { data: { session } } = await m.supabase.auth.getSession();
+      checkAuthAndOnboarding(session); // Chama a função com a sessão atual
+
+      // Configura o listener para futuras mudanças
+      const { data: authListener } = m.supabase.auth.onAuthStateChange((_event, session) => {
+        checkAuthAndOnboarding(session);
+      });
+      
+      // Limpeza do listener e do timer quando o componente for desmontado
+      return () => {
+        if (authListener && authListener.subscription) {
+          authListener.subscription.unsubscribe();
+          // console.log("Onboarding Check: Auth listener unsubscribed.");
+        }
+        clearTimeout(timer);
+      };
+    });
+
+  }, []); // O array de dependências vazio está correto aqui, pois o onAuthStateChange gerencia as atualizações
+
+  const handleCloseWelcomeModal = async () => {
+    setIsWelcomeModalOpen(false);
+    if (userProfile && userProfile.id) {
+      // console.log("Onboarding Check: Closing modal and updating onboarding_concluido for user ID:", userProfile.id);
+      const supabaseClient = await import('@/integrations/supabase/client').then(m => m.supabase);
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update({ onboarding_concluido: true })
+        .eq('id', userProfile.id);
+
+      if (error) {
+        console.error("Onboarding Check: Error updating onboarding_concluido:", error);
+      } else {
+        // console.log("Onboarding Check: onboarding_concluido updated successfully.");
+        // Atualizar o estado local do perfil para refletir a mudança
+        setUserProfile(prev => prev ? { ...prev, onboarding_concluido: true } : null);
+      }
+    }
+  };
 
   return (
     <>
@@ -183,6 +273,7 @@ const AppContent = () => {
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <WelcomeModal isOpen={isWelcomeModalOpen} onClose={handleCloseWelcomeModal} />
     </>
   );
 };

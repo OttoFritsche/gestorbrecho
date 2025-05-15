@@ -29,9 +29,6 @@ const NavBar = () => {
           <Link to="/app">
             <Button variant="ghost" className="text-amber-800 hover:bg-amber-50 font-medium">Acessar Sistema</Button>
           </Link>
-          <Button className="bg-amber-800 hover:bg-amber-700 text-white shadow-md">
-            Começar Grátis
-          </Button>
         </div>
       </div>
     </nav>

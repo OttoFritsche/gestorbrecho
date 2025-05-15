@@ -121,7 +121,7 @@ export const sidebarNavItems: NavItem[] = [
     icon: DollarSign,
     href: "/app/financeiro",
     hrefCollapsed: "/app/financeiro",
-    parentNavigatesWhenOpen: true,
+    parentNavigatesWhenOpen: false,
     children: [
       {
         label: "Dashboard",
@@ -173,13 +173,7 @@ export const sidebarNavItems: NavItem[] = [
         label: "Assistente de IA",
         icon: MessagesSquare,
         href: "/app/assistente"
-      },
-      // Este item é tratado de forma especial, pois não navega para uma rota, mas abre um widget
-      {
-        label: "Chat Rápido",
-        icon: Bot,
-        onClick: () => {} // Será substituído pelo toggleChat no componente
-      }
+      },   
     ]
   },
   {

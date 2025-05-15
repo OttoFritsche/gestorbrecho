@@ -105,46 +105,6 @@ const Financeiro: React.FC = () => {
         </p>
       </div>
 
-      {/* Resumo Financeiro Rápido */}
-      <Card className="border border-amber-200/70 bg-amber-50/30 mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold font-serif text-[#92400e] flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-amber-500" />
-            Resumo Financeiro
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-6 items-center justify-around py-4">
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-500">Saldo Atual</p>
-            {isLoading ? (
-              <Skeleton className="h-7 w-28 mx-auto mt-1" />
-            ) : (
-              <p className="text-xl font-bold text-blue-600">{formatCurrency(saldoAtual)}</p>
-            )}
-          </div>
-
-          {/* Atalhos rápidos */}
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-              asChild
-            >
-              <Link to="/app/receitas/nova">Nova Receita</Link>
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
-              asChild
-            >
-              <Link to="/app/despesas/nova">Nova Despesa</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Cards de Seção Agrupados */}
       {sectionGroups.map((group, index) => (
         <div key={group.title} className="mb-6">

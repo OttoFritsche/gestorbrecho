@@ -22,7 +22,24 @@ export const formatDate = (date: string | Date | null | undefined, includeTime: 
   }
   
   try {
-    const dateObject = date instanceof Date ? date : new Date(date);
+    let dateObject: Date;
+
+    if (date instanceof Date) {
+      dateObject = date;
+    } else {
+      // Se for string e no formato YYYY-MM-DD (com ou sem T e Z)
+      // O regex abaixo tenta ser um pouco mais flexível para strings ISO que podem ou não ter timezone.
+      // Para "YYYY-MM-DD" puro, queremos tratar como local.
+      const isoDateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (typeof date === 'string' && isoDateOnlyRegex.test(date)) {
+        const parts = date.split('-').map(Number);
+        // Mês em JavaScript Date é 0-indexado
+        dateObject = new Date(parts[0], parts[1] - 1, parts[2]);
+      } else {
+        // Para outros formatos de string ou strings com timezone, new Date() lida bem.
+        dateObject = new Date(date);
+      }
+    }
     
     // Verifica se a data é válida (não é NaN)
     if (isNaN(dateObject.getTime())) {
@@ -34,7 +51,13 @@ export const formatDate = (date: string | Date | null | undefined, includeTime: 
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-      timeZone: 'America/Sao_Paulo' // Garante que a data seja exibida no fuso horário do Brasil
+      // A criação do dateObject como new Date(ano, mesIndex, dia) para YYYY-MM-DD
+      // já o torna local. Forçar um timezone aqui pode ser redundante ou causar
+      // dupla conversão se o objeto Date já estiver correto para o fuso local.
+      // No entanto, para manter o comportamento explícito de exibir em São Paulo,
+      // como estava antes, mantemos. Se o objetivo é exibir no fuso do *usuário*,
+      // omitir timeZone faria isso.
+      timeZone: 'America/Sao_Paulo' 
     };
     
     // Adiciona informações de hora se solicitado
@@ -42,11 +65,12 @@ export const formatDate = (date: string | Date | null | undefined, includeTime: 
       options.hour = '2-digit';
       options.minute = '2-digit';
       options.second = '2-digit';
+      // Se includeTime é true, é mais crucial que timeZone esteja correto.
     }
     
     return new Intl.DateTimeFormat('pt-BR', options).format(dateObject);
   } catch (error) {
-    console.warn('Erro ao formatar data:', date);
+    console.warn('Erro ao formatar data:', date, error);
     return '-';
   }
 }

@@ -86,16 +86,72 @@ export const columns = ({ onEdit, onToggleStatus }: ColumnsProps): ColumnDef<Reg
     accessorKey: "periodo_vigencia_inicio",
     header: "Início Vigência",
     cell: ({ row }) => {
-      const date = row.getValue("periodo_vigencia_inicio") as string | null;
-      return date ? format(new Date(date), "P", { locale: ptBR }) : <span className="text-muted-foreground">-</span>;
+      const dateStr = row.getValue("periodo_vigencia_inicio") as string | null;
+      if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('-')) {
+        return <span className="text-muted-foreground">-</span>;
+      }
+      
+      const parts = dateStr.split('-').map(s => parseInt(s, 10));
+      if (parts.length === 3 && !parts.some(isNaN)) {
+        const year = parts[0];
+        const monthIndex = parts[1] - 1; // Mês em JS é 0-11
+        const day = parts[2];
+
+        if (year < 1900 || year > 3000 || monthIndex < 0 || monthIndex > 11 || day < 1 || day > 31) {
+            console.error(`[columns.tsx] Componentes de data inválidos para periodo_vigencia_inicio: ${dateStr}. Ano: ${year}, Mês (JS): ${monthIndex}, Dia: ${day}`);
+            return <span className="text-red-500">Data Inv.</span>;
+        }
+
+        const localDate = new Date(year, monthIndex, day);
+        if (isNaN(localDate.getTime())) {
+            console.error(`[columns.tsx] new Date() resultou em Invalid Date para periodo_vigencia_inicio: ${dateStr}`);
+            return <span className="text-red-500">Data Inv.</span>;
+        }
+        try {
+            return format(localDate, "P", { locale: ptBR }); // "P" é formato de data curta, ex: 01/05/2025
+        } catch (e) {
+            console.error(`[columns.tsx] Erro ao formatar data de início: ${localDate}`, e);
+            return <span className="text-red-500">Erro Dt.</span>;
+        }
+      }
+      console.error(`[columns.tsx] Formato de string de data inválido para periodo_vigencia_inicio: ${dateStr}`);
+      return <span className="text-red-500">Data Inv.</span>;
     },
   },
   {
     accessorKey: "periodo_vigencia_fim",
     header: "Fim Vigência",
     cell: ({ row }) => {
-      const date = row.getValue("periodo_vigencia_fim") as string | null;
-      return date ? format(new Date(date), "P", { locale: ptBR }) : <span className="text-muted-foreground">-</span>;
+      const dateStr = row.getValue("periodo_vigencia_fim") as string | null;
+      if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('-')) {
+        return <span className="text-muted-foreground">-</span>;
+      }
+      
+      const parts = dateStr.split('-').map(s => parseInt(s, 10));
+      if (parts.length === 3 && !parts.some(isNaN)) {
+        const year = parts[0];
+        const monthIndex = parts[1] - 1; // Mês em JS é 0-11
+        const day = parts[2];
+
+        if (year < 1900 || year > 3000 || monthIndex < 0 || monthIndex > 11 || day < 1 || day > 31) {
+            console.error(`[columns.tsx] Componentes de data inválidos para periodo_vigencia_fim: ${dateStr}. Ano: ${year}, Mês (JS): ${monthIndex}, Dia: ${day}`);
+            return <span className="text-red-500">Data Inv.</span>;
+        }
+
+        const localDate = new Date(year, monthIndex, day);
+        if (isNaN(localDate.getTime())) {
+            console.error(`[columns.tsx] new Date() resultou em Invalid Date para periodo_vigencia_fim: ${dateStr}`);
+            return <span className="text-red-500">Data Inv.</span>;
+        }
+        try {
+            return format(localDate, "P", { locale: ptBR }); // "P" é formato de data curta, ex: 01/05/2025
+        } catch (e) {
+            console.error(`[columns.tsx] Erro ao formatar data de fim: ${localDate}`, e);
+            return <span className="text-red-500">Erro Dt.</span>;
+        }
+      }
+      console.error(`[columns.tsx] Formato de string de data inválido para periodo_vigencia_fim: ${dateStr}`);
+      return <span className="text-red-500">Data Inv.</span>;
     },
   },
   {

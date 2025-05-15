@@ -30,18 +30,45 @@ export type UpdateRegraComissaoData = Partial<CreateRegraComissaoData>;
 
 // Função auxiliar para formatar dados antes de enviar ao Supabase
 const formatDataForSupabase = (data: Partial<RegraComissaoInput>) => {
-  const formattedData = { ...data };
-  // Formata datas (se existirem) para YYYY-MM-DD ou null
-  if (data.periodo_vigencia_inicio) {
-    formattedData.periodo_vigencia_inicio = format(new Date(data.periodo_vigencia_inicio), 'yyyy-MM-dd');
+  const formattedData: Partial<RegraComissaoInput> = { ...data };
+
+  // Trata periodo_vigencia_inicio
+  if (data.periodo_vigencia_inicio !== undefined) {
+    if (typeof data.periodo_vigencia_inicio === 'string') {
+      // Se já é string, assume-se que está no formato YYYY-MM-DD e mantém
+      formattedData.periodo_vigencia_inicio = data.periodo_vigencia_inicio;
+    } else if (data.periodo_vigencia_inicio instanceof Date) {
+      // Se for um objeto Date (pouco provável vindo do form atual, mas para robustez)
+      formattedData.periodo_vigencia_inicio = format(data.periodo_vigencia_inicio, 'yyyy-MM-dd');
+    } else {
+      // Caso seja outro tipo ou null vindo como não-string (ex: explicitamente null)
+      formattedData.periodo_vigencia_inicio = data.periodo_vigencia_inicio;
+    }
   } else {
+    // Se o campo original era undefined, converte para null
     formattedData.periodo_vigencia_inicio = null;
   }
-  if (data.periodo_vigencia_fim) {
-    formattedData.periodo_vigencia_fim = format(new Date(data.periodo_vigencia_fim), 'yyyy-MM-dd');
+
+  // Trata periodo_vigencia_fim
+  if (data.periodo_vigencia_fim !== undefined) {
+    if (typeof data.periodo_vigencia_fim === 'string') {
+      // Se já é string, assume-se que está no formato YYYY-MM-DD e mantém
+      formattedData.periodo_vigencia_fim = data.periodo_vigencia_fim;
+    } else if (data.periodo_vigencia_fim instanceof Date) {
+      // Se for um objeto Date
+      formattedData.periodo_vigencia_fim = format(data.periodo_vigencia_fim, 'yyyy-MM-dd');
+    } else {
+      // Caso seja outro tipo ou null vindo como não-string
+      formattedData.periodo_vigencia_fim = data.periodo_vigencia_fim;
+    }
   } else {
+    // Se o campo original era undefined, converte para null
     formattedData.periodo_vigencia_fim = null;
   }
+  
+  // Se um campo de data foi passado como null explicitamente, ele permanecerá null.
+  // Ex: { periodo_vigencia_inicio: null } -> formattedData.periodo_vigencia_inicio será null.
+
   return formattedData;
 };
 
@@ -94,10 +121,14 @@ export const getRegraComissaoById = async (id: string): Promise<RegraComissao | 
  * @throws {Error} Se os dados forem inválidos ou a inserção no Supabase falhar.
  */
 export const createRegraComissao = async (inputData: RegraComissaoInput): Promise<RegraComissao> => {
-  const formattedData = formatDataForSupabase(inputData);
+  const supabaseData = formatDataForSupabase(inputData);
+
+  // Log para verificar o que está sendo enviado para o Supabase
+  console.log('[regrasComissaoService] Dados formatados para Supabase em create:', supabaseData);
+
   const { data, error } = await supabase
     .from('regras_comissao')
-    .insert(formattedData)
+    .insert(supabaseData)
     .select()
     .single();
 
@@ -116,11 +147,15 @@ export const createRegraComissao = async (inputData: RegraComissaoInput): Promis
  * @throws {Error} Se o ID for inválido ou a atualização no Supabase falhar.
  */
 export const updateRegraComissao = async (id: string, inputData: Partial<RegraComissaoInput>): Promise<RegraComissao> => {
-  const formattedData = formatDataForSupabase(inputData);
+  const supabaseData = formatDataForSupabase(inputData);
+
+  // Log para verificar o que está sendo enviado para o Supabase
+  console.log('[regrasComissaoService] Dados formatados para Supabase em update:', supabaseData);
+
   const { data, error } = await supabase
     .from('regras_comissao')
     .update({
-      ...formattedData,
+      ...supabaseData,
       updated_at: new Date().toISOString() // Garante atualização do timestamp
     })
     .eq('id', id)

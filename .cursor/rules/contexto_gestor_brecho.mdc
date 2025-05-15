@@ -5,11 +5,11 @@ alwaysApply: true
 ---
 ---
 # METADADOS PARA PROCESSAMENTO POR IA
-version: 2.0
+version: 2.1
 formato: yaml
 linguagem: pt-BR
 codificacao: UTF-8
-ultima_atualizacao: 2025-05-10T15:30:00-03:00
+ultima_atualizacao: 2025-05-15T15:05:00-03:00
 contexto_ia:
   - tipo_sistema: gestao_brecho
   - dominio: varejo_moda_sustentavel
@@ -105,6 +105,9 @@ modulos:
     - assistente_virtual
     - suporte_contextual
     - integracao_dados
+    - mensagens_generativas_n8n
+    - chat_interface
+    - floating_chat_icon
 
   vendedores:
     - cadastro_detalhado
@@ -510,8 +513,27 @@ ciclo_atualizacao: semanal
 politica_versoes: semver
 padrao_comunicacao: RESTful
 
-
-
-
-
-
+# FUNCIONALIDADE: MENSAGENS GENERATIVAS VIA N8N
+mensagens_generativas_n8n:
+  descricao: |
+    Permite que o assistente virtual responda de forma generativa a perguntas abertas, cumprimentos e dúvidas gerais, sem acionar consultas ao banco de dados, utilizando modelos de linguagem integrados ao n8n.
+  objetivo: |
+    Oferecer uma experiência conversacional natural, respondendo de forma simpática e útil a mensagens que não envolvem dados sensíveis ou consultas SQL, mantendo o contexto do brechó.
+  fluxo:
+    - O usuário envia uma mensagem pelo chat (ex: "Bom dia!", "Como funciona o sistema?").
+    - O frontend encaminha a mensagem ao webhook do n8n.
+    - O n8n identifica se a mensagem exige consulta ao banco (ex: vendas, estoque) ou se pode ser respondida generativamente.
+    - Se for generativa, o modelo de IA responde diretamente, sem acionar ferramentas de dados.
+    - A resposta é retornada ao usuário de forma amigável.
+  requisitos:
+    - O modelo deve ser capaz de distinguir perguntas de dados de perguntas abertas.
+    - Não acionar queries SQL para mensagens generativas.
+    - Garantir que nenhuma informação sensível seja exposta em respostas generativas.
+    - Respeitar o contexto e tom do sistema Gestor Brechó.
+  exemplos:
+    - input: "Olá, tudo bem?"
+      output: "Olá! Estou aqui para ajudar com a gestão do seu brechó. Como posso ajudar hoje?"
+    - input: "Como funciona o sistema?"
+      output: "O Gestor Brechó automatiza vendas, estoque e finanças para facilitar o seu dia a dia. Quer saber mais sobre alguma funcionalidade específica?"
+    - input: "Quais produtos estão em estoque?"
+      output: "Para essa informação, vou consultar o banco de dados. Aguarde um instante."

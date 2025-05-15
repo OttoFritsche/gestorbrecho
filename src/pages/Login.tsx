@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast'; // Usaremos toast para feedback
 import { useNavigate, Link } from 'react-router-dom'; // Para redirecionamento
 import { ArrowLeft } from 'lucide-react'; // Importar ícone de seta
 import logoImage from '@/assets/logo/1.png'; // Importar o logo
+import { InterestModalForm } from '@/components/landing/InterestModalForm'; // Importar o modal
 
 // Schema de validação com Zod
 const formSchema = z.object({
@@ -20,6 +21,7 @@ const formSchema = z.object({
 
 function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [isInterestModalOpen, setIsInterestModalOpen] = useState(false); // Estado para o novo modal
   const { toast } = useToast();
   const navigate = useNavigate(); // Hook para navegação programática
 
@@ -126,15 +128,25 @@ function LoginPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="justify-center">
+        <CardFooter className="flex-col items-center justify-center space-y-2">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Não tem uma conta?{' '}
-            <Link to="/signup" className="font-medium text-primary hover:underline">
-              Cadastre-se
-            </Link>
+            Interessado no Gestor Brechó?
           </p>
+          <Button 
+            variant="link" 
+            className="font-medium text-primary hover:underline p-0 h-auto"
+            onClick={() => setIsInterestModalOpen(true)}
+          >
+            Clique aqui para saber mais
+          </Button>
         </CardFooter>
       </Card>
+      <InterestModalForm 
+        open={isInterestModalOpen}
+        onOpenChange={setIsInterestModalOpen}
+        title="Interessado no Gestor Brechó?"
+        description="Deixe seus dados e entraremos em contato para apresentar a plataforma!"
+      />
     </div>
   );
 }

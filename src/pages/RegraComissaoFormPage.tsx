@@ -24,6 +24,37 @@ const RegraComissaoFormPage: React.FC = () => {
     enabled: isEditing,
   });
 
+  // Função utilitária para converter string YYYY-MM-DD para objeto Date local
+  const parseDateStringAsLocal = (dateString: string | null | undefined): Date | null => {
+    if (!dateString || typeof dateString !== 'string' || !dateString.includes('-')) {
+      // console.log(`[RegraComissaoFormPage] parseDateStringAsLocal: Entrada inválida ou nula: ${dateString}`);
+      return null;
+    }
+    // console.log(`[RegraComissaoFormPage] parseDateStringAsLocal: Tentando parsear: ${dateString}`);
+    const parts = dateString.split('-').map(s => parseInt(s, 10));
+    
+    if (parts.length === 3 && !parts.some(isNaN)) {
+      const year = parts[0];
+      const monthIndex = parts[1] - 1; // Mês em JS é 0-11
+      const day = parts[2];
+
+      if (year < 1900 || year > 3000 || monthIndex < 0 || monthIndex > 11 || day < 1 || day > 31) {
+          console.error(`[RegraComissaoFormPage] Componentes da data fora do intervalo ao parsear: ${dateString}. Ano: ${year}, Mês (JS): ${monthIndex}, Dia: ${day}`);
+          return null; 
+      }
+      
+      const newDate = new Date(year, monthIndex, day);
+      if (isNaN(newDate.getTime())) {
+        console.error(`[RegraComissaoFormPage] new Date(${year}, ${monthIndex}, ${day}) resultou em Invalid Date. String original: '${dateString}'`);
+        return null;
+      }
+      // console.log(`[RegraComissaoFormPage] parseDateStringAsLocal: Data parseada com sucesso:`, newDate.toISOString());
+      return newDate;
+    }
+    console.error(`[RegraComissaoFormPage] Formato de string de data inválido ao parsear: ${dateString}. Parts:`, parts);
+    return null;
+  };
+
   const mutation = useMutation({
     mutationFn: (data: { input: RegraComissaoInput; id?: string }) => {
       if (data.id) {
@@ -54,13 +85,13 @@ const RegraComissaoFormPage: React.FC = () => {
     return <ErrorDisplay error={error} title="Erro ao carregar regra para edição" />;
   }
   
-  // Prepara dados iniciais para o formulário (parsear datas se vierem do DB)
   const initialFormData = isEditing && regraData ? {
       ...regraData,
-      periodo_vigencia_inicio: regraData.periodo_vigencia_inicio ? new Date(regraData.periodo_vigencia_inicio.replace(/-/g, '/')+'T00:00:00') : null,
-      periodo_vigencia_fim: regraData.periodo_vigencia_fim ? new Date(regraData.periodo_vigencia_fim.replace(/-/g, '/')+'T00:00:00') : null,
+      periodo_vigencia_inicio: parseDateStringAsLocal(regraData.periodo_vigencia_inicio),
+      periodo_vigencia_fim: parseDateStringAsLocal(regraData.periodo_vigencia_fim),
   } : undefined;
 
+  // console.log("[RegraComissaoFormPage] initialFormData preparado:", initialFormData);
 
   return (
     <div className="container mx-auto py-8">

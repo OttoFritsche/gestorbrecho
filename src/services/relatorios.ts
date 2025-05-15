@@ -31,18 +31,52 @@ export const getResumoFinanceiroMesAtual = async (
     const dataInicioMes = format(startOfMonth(dataBase), 'yyyy-MM-dd');
     const dataFimMes = format(endOfMonth(dataBase), 'yyyy-MM-dd');
 
-    // 1. Buscar Total de Receitas do Mês
-    const { data: receitasData, error: receitasError } = await supabase
+    // CORREÇÃO: Usar data_venda para filtrar vendas, já que data_venda_local pode estar vazio
+    const { data: vendasPeriodo, error: vendasError } = await supabase
+      .from('vendas')
+      .select('id, valor_total, data_venda')
+      .gte('data_venda', format(startOfMonth(dataBase), 'yyyy-MM-dd') + 'T00:00:00')
+      .lte('data_venda', format(endOfMonth(dataBase), 'yyyy-MM-dd') + 'T23:59:59');
+
+    if (vendasError) {
+      console.error('Erro ao buscar vendas do período:', vendasError);
+      throw new Error('Erro ao buscar vendas.');
+    }
+
+    // Log para diagnosticar
+    console.log(`Vendas encontradas no período ${dataInicioMes} a ${dataFimMes}:`, vendasPeriodo?.length || 0);
+
+    // Identificamos as vendas do período para evitar contar suas parcelas
+    const idsVendasPeriodo = vendasPeriodo?.map(v => v.id) || [];
+    const totalVendasPeriodo = vendasPeriodo?.reduce((sum, item) => sum + parseFloat(item.valor_total), 0) || 0;
+
+    // CORREÇÃO: Modificar consulta para lidar corretamente com o caso de lista vazia
+    let receitasQuery = supabase
       .from('receitas')
-      .select('valor')
+      .select('valor, tipo, venda_id')
       .gte('data', dataInicioMes)
       .lte('data', dataFimMes);
+
+    // Só aplicamos filtro se houver vendas no período
+    if (idsVendasPeriodo.length > 0) {
+      receitasQuery = receitasQuery.not('venda_id', 'in', `(${idsVendasPeriodo.join(',')})`);
+    }
+
+    const { data: outrasReceitasData, error: receitasError } = await receitasQuery;
 
     if (receitasError) {
       console.error('Erro ao buscar receitas do mês:', receitasError);
       throw new Error('Erro ao buscar receitas.');
     }
-    const totalReceitas = receitasData?.reduce((sum, item) => sum + item.valor, 0) ?? 0;
+
+    // Log para diagnóstico
+    console.log(`Outras receitas encontradas (excl. parcelas de vendas do período):`, outrasReceitasData?.length || 0);
+
+    // Somamos os valores das vendas do período com outras receitas (excluindo parcelas dessas vendas)
+    const totalOutrasReceitas = outrasReceitasData?.reduce((sum, item) => sum + parseFloat(item.valor), 0) || 0;
+    const totalReceitas = totalVendasPeriodo + totalOutrasReceitas;
+
+    console.log(`Total vendas: ${totalVendasPeriodo}, Total outras receitas: ${totalOutrasReceitas}`);
 
     // 2. Buscar Total de Despesas Pagas do Mês
     const { data: despesasData, error: despesasError } = await supabase
@@ -56,7 +90,7 @@ export const getResumoFinanceiroMesAtual = async (
       console.error('Erro ao buscar despesas pagas do mês:', despesasError);
       throw new Error('Erro ao buscar despesas.');
     }
-    const totalDespesas = despesasData?.reduce((sum, item) => sum + item.valor, 0) ?? 0;
+    const totalDespesas = despesasData?.reduce((sum, item) => sum + parseFloat(item.valor), 0) || 0;
 
     // 3. Buscar Saldo Atual (último saldo do fluxo de caixa)
     const { data: fluxoData, error: fluxoError } = await supabase
@@ -206,26 +240,83 @@ export const getReceitasPorCategoria = async (
   dataFim: string
 ): Promise<ReceitaCategoriaAgrupada[]> => {
   try {
-    // Busca receitas e faz join com categorias
-    const { data, error } = await supabase
+    // CORREÇÃO: Primeiro buscamos as vendas do período para evitar contar suas parcelas
+    const { data: vendasPeriodo, error: vendasError } = await supabase
+      .from('vendas')
+      .select('id, valor_total, data_venda')
+      .gte('data_venda', dataInicio + 'T00:00:00')
+      .lte('data_venda', dataFim + 'T23:59:59');
+
+    if (vendasError) {
+      console.error('Erro ao buscar vendas do período para categorias:', vendasError);
+      throw new Error('Erro ao buscar vendas.');
+    }
+
+    // Identificamos as vendas do período
+    const idsVendasPeriodo = vendasPeriodo?.map(v => v.id) || [];
+    
+    // Preparamos o agrupamento para incluir vendas diretas
+    const agrupado: { [key: string]: ReceitaCategoriaAgrupada } = {};
+    
+    // Primeiro processamos as vendas do período por categoria
+    for (const venda of vendasPeriodo || []) {
+      // Busca a categoria da venda (pode buscar da primeira receita ou de outra tabela)
+      const { data: receitaVenda, error: receitaError } = await supabase
+        .from('receitas')
+        .select('categoria_id, categorias(nome)')
+        .eq('venda_id', venda.id)
+        .limit(1)
+        .maybeSingle();
+        
+      if (receitaError) {
+        console.error(`Erro ao buscar categoria da venda ${venda.id}:`, receitaError);
+        continue; // Pula esta venda em caso de erro
+      }
+      
+      // Define categoria da venda (usa "Vendas" como padrão se não encontrar)
+      const idCat = receitaVenda?.categoria_id ?? 'vendas';
+      const nomeCat = (receitaVenda?.categorias as { nome: string } | null)?.nome ?? 'Vendas';
+      
+      if (!agrupado[idCat]) {
+        agrupado[idCat] = {
+          categoria_id: receitaVenda?.categoria_id,
+          categoria_nome: nomeCat,
+          total_receita: 0,
+          quantidade_receitas: 0,
+        };
+      }
+      
+      // Adiciona o valor total da venda na categoria
+      agrupado[idCat].total_receita += parseFloat(venda.valor_total);
+      agrupado[idCat].quantidade_receitas += 1;
+    }
+    
+    // Agora buscamos outras receitas, excluindo aquelas que são parcelas das vendas do período
+    let receitasQuery = supabase
       .from('receitas')
       .select(`
         categoria_id,
         categorias ( nome ),
-        valor
+        valor,
+        venda_id
       `)
-      .gte('data', dataInicio) // Filtra pela data da receita
+      .gte('data', dataInicio)
       .lte('data', dataFim);
+      
+    // Filtra para não incluir parcelas de vendas que já foram contabilizadas
+    if (idsVendasPeriodo.length > 0) {
+      receitasQuery = receitasQuery.not('venda_id', 'in', `(${idsVendasPeriodo.join(',')})`);
+    }
 
-    if (error) {
-      console.error('Erro ao buscar receitas por categoria:', error);
+    const { data: outrasReceitas, error: outrasReceitasError } = await receitasQuery;
+
+    if (outrasReceitasError) {
+      console.error('Erro ao buscar outras receitas por categoria:', outrasReceitasError);
       throw new Error('Erro ao buscar dados das receitas.');
     }
 
-    // Agrupamento manual no lado do cliente (TypeScript)
-    const agrupado: { [key: string]: ReceitaCategoriaAgrupada } = {};
-
-    data?.forEach((receita) => {
+    // Processa outras receitas (que não são parcelas de vendas do período)
+    outrasReceitas?.forEach((receita) => {
       const idCat = receita.categoria_id ?? 'sem_categoria';
       const nomeCat = (receita.categorias as { nome: string } | null)?.nome ?? 'Sem Categoria';
 
@@ -237,6 +328,7 @@ export const getReceitasPorCategoria = async (
           quantidade_receitas: 0,
         };
       }
+      
       agrupado[idCat].total_receita += receita.valor;
       agrupado[idCat].quantidade_receitas += 1;
     });
@@ -275,23 +367,49 @@ export const getLucratividadeMensal = async (
   };
 
   try {
-    // 1. Buscar Total de Receitas do Mês
-    const { data: receitasData, error: receitasError } = await supabase
+    // CORREÇÃO: Primeiro buscamos as vendas do período para evitar contar as parcelas duas vezes
+    const { data: vendasPeriodo, error: vendasError } = await supabase
+      .from('vendas')
+      .select('id, valor_total, data_venda')
+      .gte('data_venda', dataInicio + 'T00:00:00')
+      .lte('data_venda', dataFim + 'T23:59:59');
+
+    if (vendasError) {
+      console.error('Erro ao buscar vendas do período para lucratividade:', vendasError);
+      throw new Error('Erro ao buscar vendas.');
+    }
+
+    // Identificamos as vendas do período para evitar contar suas parcelas
+    const idsVendasPeriodo = vendasPeriodo?.map(v => v.id) || [];
+    const totalVendasPeriodo = vendasPeriodo?.reduce((sum, item) => sum + parseFloat(item.valor_total), 0) || 0;
+
+    // Agora buscamos outras receitas, excluindo aquelas que são parcelas das vendas do período
+    let receitasQuery = supabase
       .from('receitas')
-      .select('valor', { count: 'exact' }) // Usar count só para verificar se houve erro real
+      .select('valor, venda_id')
       .gte('data', dataInicio)
       .lte('data', dataFim);
-
-    if (receitasError && !receitasData) { // Lança erro apenas se não houver dados E erro
-        console.error('Erro ao buscar receitas para lucratividade:', receitasError);
-        throw new Error('Erro ao buscar receitas do período.');
+      
+    // Filtra para não incluir parcelas de vendas que já foram contabilizadas
+    if (idsVendasPeriodo.length > 0) {
+      receitasQuery = receitasQuery.not('venda_id', 'in', `(${idsVendasPeriodo.join(',')})`);
     }
-    const totalReceitas = receitasData?.reduce((sum, item) => sum + item.valor, 0) ?? 0;
+
+    const { data: outrasReceitasData, error: receitasError } = await receitasQuery;
+
+    if (receitasError) {
+      console.error('Erro ao buscar outras receitas para lucratividade:', receitasError);
+      throw new Error('Erro ao buscar receitas.');
+    }
+
+    // Somamos os valores das vendas do período com outras receitas (excluindo parcelas dessas vendas)
+    const totalOutrasReceitas = outrasReceitasData?.reduce((sum, item) => sum + parseFloat(item.valor), 0) || 0;
+    const totalReceitas = totalVendasPeriodo + totalOutrasReceitas;
 
     // 2. Buscar Total de Despesas Pagas do Mês
     const { data: despesasData, error: despesasError } = await supabase
       .from('despesas')
-      .select('valor', { count: 'exact' })
+      .select('valor')
       .eq('pago', true)
       .gte('data', dataInicio)
       .lte('data', dataFim);
@@ -339,18 +457,39 @@ export const getComparativoMensal = async (
     const mesReferencia = format(dataReferencia, 'yyyy-MM');
 
     try {
-      // Reutiliza a lógica ou chama getLucratividadeMensal (cuidado com performance se chamar N vezes)
-      // Vamos replicar a lógica aqui para evitar N chamadas separadas que podem ser lentas.
+      // CORREÇÃO: Usamos a mesma lógica corrigida para getLucratividadeMensal
+      // Primeiro buscamos as vendas do período
+      const { data: vendasPeriodo, error: vendasError } = await supabase
+        .from('vendas')
+        .select('id, valor_total, data_venda')
+        .gte('data_venda', dataInicio + 'T00:00:00')
+        .lte('data_venda', dataFim + 'T23:59:59');
 
-      // 1. Receitas
-      const { data: receitasData, error: receitasError } = await supabase
+      if (vendasError) throw new Error(`Erro vendas ${mesReferencia}: ${vendasError.message}`);
+
+      // Identificamos as vendas do período para evitar duplicação
+      const idsVendasPeriodo = vendasPeriodo?.map(v => v.id) || [];
+      const totalVendasPeriodo = vendasPeriodo?.reduce((sum, item) => sum + parseFloat(item.valor_total), 0) || 0;
+
+      // Buscamos outras receitas, excluindo as parcelas das vendas do período
+      let receitasQuery = supabase
         .from('receitas')
-        .select('valor')
+        .select('valor, venda_id')
         .gte('data', dataInicio)
         .lte('data', dataFim);
-      if (receitasError) throw new Error(`Erro receitas ${mesReferencia}: ${receitasError.message}`);
-      const totalReceitas = receitasData?.reduce((sum, item) => sum + item.valor, 0) ?? 0;
+        
+      // Filtra para não incluir parcelas de vendas já contabilizadas
+      if (idsVendasPeriodo.length > 0) {
+        receitasQuery = receitasQuery.not('venda_id', 'in', `(${idsVendasPeriodo.join(',')})`);
+      }
 
+      const { data: outrasReceitasData, error: receitasError } = await receitasQuery;
+      if (receitasError) throw new Error(`Erro outras receitas ${mesReferencia}: ${receitasError.message}`);
+      
+      // Somamos valores das vendas do período com outras receitas (exceto parcelas dessas vendas)
+      const totalOutrasReceitas = outrasReceitasData?.reduce((sum, item) => sum + parseFloat(item.valor), 0) || 0;
+      const totalReceitas = totalVendasPeriodo + totalOutrasReceitas;
+      
       // 2. Despesas
       const { data: despesasData, error: despesasError } = await supabase
         .from('despesas')

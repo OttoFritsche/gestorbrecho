@@ -62,15 +62,6 @@ const HowItWorksSection = () => {
               </div>
             ))}
           </div>
-          
-          <div className="mt-16 text-center">
-            <Button className="bg-amber-800 hover:bg-amber-700 text-white shadow-lg px-8 py-6 text-lg">
-              Começar Agora
-            </Button>
-            <p className="text-stone-600 mt-4">
-              Comece grátis. Sem comprometimento. Cancele quando quiser.
-            </p>
-          </div>
         </div>
       </div>
     </div>

@@ -35,11 +35,9 @@ const createColumns = (onEdit: (fp: FormaPagamento) => void, onDelete: (id: stri
             <Edit className="h-4 w-4" />
           </Button>
           {/* // Botão Excluir (com confirmação) */}
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive" size="icon" onClick={() => onDelete(formaPagamento.id)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
+          <Button variant="destructive" size="icon" onClick={() => onDelete(formaPagamento.id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       );
     },

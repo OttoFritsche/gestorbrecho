@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, ChevronRight } from "lucide-react";
+import { InterestModalForm } from '@/components/landing/InterestModalForm';
+
 const HeroSection = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return <div className="bg-gradient-to-br from-rose-50 to-amber-50 py-16 md:py-24 -mt-16">
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12">
@@ -13,12 +17,13 @@ const HeroSection = () => {
               A plataforma completa para administrar estoque, vendas, fornecedores e finanças do seu brechó de forma simples e organizada.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4 opacity-0 animate-fade-in-delay-2">
-              <Button className="bg-amber-800 hover:bg-amber-700 text-white flex items-center gap-2">
+              <Button 
+                className="bg-amber-800 hover:bg-amber-700 text-white flex items-center gap-2"
+                onClick={() => setIsModalOpen(true)}
+              >
                 <ShoppingBag className="w-5 h-5" />
-                Comece Agora (14 dias grátis)
-              </Button>
-              <Button variant="outline" className="border-amber-800 text-amber-800 hover:bg-amber-50">
-                Solicitar Demonstração
+                Tenho Interesse
+                <ChevronRight className="w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -33,6 +38,12 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
+      <InterestModalForm 
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        title="Interessado no Gestor Brechó?"
+        description="Preencha seus dados e entraremos em contato para agendar uma demonstração e discutir suas necessidades."
+      />
     </div>;
 };
 export default HeroSection;

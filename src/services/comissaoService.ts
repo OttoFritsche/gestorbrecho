@@ -10,6 +10,8 @@ export interface Comissao {
   regra_aplicada_id: string | null;    // UUID (FK para regras_comissao)
   valor_calculado: number;             // DECIMAL NOT NULL
   data_calculo: string;                // TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+  status: 'pendente' | 'aprovada' | 'paga' | 'estornada'; // TEXT NOT NULL DEFAULT 'pendente'
+  data_pagamento: string | null;       // TIMESTAMP WITH TIME ZONE NULL
   observacoes: string | null;          // TEXT
   created_at: string;                  // TIMESTAMP WITH TIME ZONE
   updated_at: string;                  // TIMESTAMP WITH TIME ZONE
@@ -19,8 +21,10 @@ export interface Comissao {
  * Tipo para criação de um novo registro de Comissão.
  * O campo `data_calculo` pode ser opcional na criação, pois o DB tem default.
  */
-export type CreateComissaoData = Omit<Comissao, 'id' | 'created_at' | 'updated_at' | 'data_calculo' > & {
+export type CreateComissaoData = Omit<Comissao, 'id' | 'created_at' | 'updated_at' | 'data_calculo' | 'status' | 'data_pagamento'> & {
     data_calculo?: string; // Permite que seja opcional na entrada da função
+    status?: 'pendente' | 'aprovada' | 'paga' | 'estornada'; // Opcional, pois tem DEFAULT 'pendente'
+    data_pagamento?: string | null;
 };
 
 /**
@@ -28,7 +32,10 @@ export type CreateComissaoData = Omit<Comissao, 'id' | 'created_at' | 'updated_a
  * Geralmente, comissões calculadas podem não ser diretamente atualizáveis, 
  * mas incluímos para consistência. A lógica de negócio pode restringir o uso.
  */
-export type UpdateComissaoData = Partial<Omit<Comissao, 'id' | 'created_at' | 'updated_at' | 'data_calculo'>>;
+export type UpdateComissaoData = Partial<Omit<Comissao, 'id' | 'created_at' | 'updated_at' | 'data_calculo'>> & {
+  status?: 'pendente' | 'aprovada' | 'paga' | 'estornada';
+  data_pagamento?: string | null;
+};
 
 const TABLE_NAME = 'comissoes';
 
@@ -202,5 +209,188 @@ export const deleteComissao = async (id: string): Promise<void> => {
   } catch (err) {
     console.error(`Exceção ao deletar comissão ${id}:`, err);
     throw err instanceof Error ? err : new Error('Erro desconhecido ao deletar o registro de comissão.');
+  }
+};
+
+/**
+ * @description Dá baixa em uma comissão, marcando-a como paga e registrando a despesa no fluxo financeiro.
+ * @param {string} comissaoId - ID da comissão a receber baixa
+ * @param {string} categoriaDespesaId - ID da categoria de despesa (normalmente "Comissões de Vendedores")
+ * @param {string} [dataPagamento] - Data de pagamento opcional (formato ISO). Se não fornecida, usa a data atual.
+ * @returns {Promise<{ comissao: Comissao, movimentacao: any }>} - A comissão atualizada e a movimentação gerada
+ * @throws {Error} Se o ID for inválido ou ocorrer erro no processo de baixa
+ */
+export const darBaixaComissao = async (
+  comissaoId: string, 
+  categoriaDespesaId: string,
+  dataPagamento?: string
+): Promise<{ comissao: Comissao, movimentacao: any }> => {
+  if (!comissaoId || !comissaoId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    throw new Error('ID de comissão inválido.');
+  }
+  
+  if (!categoriaDespesaId || !categoriaDespesaId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    throw new Error('ID de categoria inválido.');
+  }
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Usuário não autenticado.');
+    }
+    const userId = user.id;
+
+    const comissaoOriginal = await getComissaoById(comissaoId);
+    if (!comissaoOriginal) {
+      throw new Error(`Comissão com ID ${comissaoId} não encontrada.`);
+    }
+    if (comissaoOriginal.status === 'paga') {
+      throw new Error('Esta comissão já foi paga.');
+    }
+
+    const { data: vendedor, error: vendedorError } = await supabase
+      .from('vendedores')
+      .select('nome')
+      .eq('id', comissaoOriginal.vendedor_id)
+      .single();
+    if (vendedorError) {
+      throw new Error(`Erro ao buscar dados do vendedor: ${vendedorError.message}`);
+    }
+
+    const dataEfetivaISO = dataPagamento || new Date().toISOString();
+    // Formatar a data para YYYY-MM-DD para a tabela fluxo_caixa
+    const dataFluxoCaixa = dataEfetivaISO.split('T')[0];
+
+    // 1. Obter ou criar o registro de fluxo_caixa para o dia e usuário
+    let fluxoCaixaId: string;
+
+    const { data: fcExistente, error: fcErrorFind } = await supabase
+      .from('fluxo_caixa')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('data', dataFluxoCaixa)
+      .single();
+
+    if (fcErrorFind && fcErrorFind.code !== 'PGRST116') { // PGRST116: No rows found
+      throw new Error(`Erro ao buscar fluxo de caixa: ${fcErrorFind.message}`);
+    }
+
+    if (fcExistente) {
+      fluxoCaixaId = fcExistente.id;
+    } else {
+      // Criar novo registro em fluxo_caixa
+      // Simplificado: saldo_inicial = 0. Idealmente buscaria do dia anterior.
+      const { data: novoFc, error: fcErrorCreate } = await supabase
+        .from('fluxo_caixa')
+        .insert({
+          user_id: userId,
+          data: dataFluxoCaixa,
+          saldo_inicial: 0, // Simplificado
+          entradas: 0,
+          saidas: 0,
+          saldo_final: 0, // Será atualizado por triggers ou procedures, idealmente
+        })
+        .select('id')
+        .single();
+
+      if (fcErrorCreate || !novoFc) {
+        throw new Error(`Erro ao criar registro de fluxo de caixa: ${fcErrorCreate?.message || 'Não foi possível obter o ID do novo fluxo de caixa.'}`);
+      }
+      fluxoCaixaId = novoFc.id;
+    }
+
+    // 2. Atualizar a comissão
+    const { data: comissaoAtualizada, error: comissaoError } = await supabase
+      .from(TABLE_NAME)
+      .update({
+        status: 'paga',
+        data_pagamento: dataEfetivaISO,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', comissaoId)
+      .select()
+      .single();
+      
+    if (comissaoError) {
+      throw new Error(`Erro ao atualizar status da comissão: ${comissaoError.message}`);
+    }
+    
+    // 3. Criar o registro de Despesa primeiro
+    const descricaoDespesa = `Pagamento de comissão: ${vendedor.nome} - Venda ID: ${comissaoOriginal.venda_id.substring(0,8)}`;
+    const { data: novaDespesa, error: erroNovaDespesa } = await supabase
+      .from('despesas')
+      .insert({
+        user_id: userId,
+        descricao: descricaoDespesa,
+        valor: comissaoOriginal.valor_calculado,
+        data: dataEfetivaISO, // Data do pagamento
+        pago: true,
+        categoria_id: categoriaDespesaId, // ID da categoria 'Comissões de Vendedores'
+        tipo_despesa: 'negocio', // Ou o tipo apropriado
+        recorrente: false,
+        // Outros campos podem ter defaults ou serem null
+      })
+      .select('id')
+      .single();
+
+    if (erroNovaDespesa || !novaDespesa) {
+      // Rollback da comissão se a criação da despesa falhar
+      await supabase
+        .from(TABLE_NAME)
+        .update({
+          status: comissaoOriginal.status,
+          data_pagamento: comissaoOriginal.data_pagamento,
+          updated_at: comissaoOriginal.updated_at 
+        })
+        .eq('id', comissaoId);
+      throw new Error(`Erro ao criar registro de despesa: ${erroNovaDespesa?.message || 'Não foi possível obter o ID da nova despesa.'}`);
+    }
+    const idDaNovaDespesa = novaDespesa.id;
+
+    // 4. Criar a movimentação financeira, usando o ID da despesa criada
+    const descricaoMovimentacao = `Comissão para ${vendedor.nome} - Venda ${comissaoOriginal.venda_id.substring(0, 8)}`;
+    
+    const { data: movimentacao, error: movimentacaoError } = await supabase
+      .from('movimentos_caixa')
+      .insert([{
+        fluxo_caixa_id: fluxoCaixaId,
+        user_id: userId,
+        tipo: 'saida',
+        despesa_id: idDaNovaDespesa, // Usar o ID da despesa recém-criada
+        valor: comissaoOriginal.valor_calculado,
+        data: dataEfetivaISO, 
+        descricao: descricaoMovimentacao,
+        status: 'realizado',
+        referencia_id: comissaoId,
+        referencia_tipo: 'comissao'
+      }])
+      .select()
+      .single();
+      
+    if (movimentacaoError) {
+      // Rollback da comissão
+      await supabase
+        .from(TABLE_NAME)
+        .update({
+          status: comissaoOriginal.status,
+          data_pagamento: comissaoOriginal.data_pagamento,
+          updated_at: comissaoOriginal.updated_at 
+        })
+        .eq('id', comissaoId);
+      throw new Error(`Erro ao registrar movimentação financeira: ${movimentacaoError.message}`);
+    }
+    
+    // Idealmente, aqui também haveria uma lógica para atualizar os saldos (entradas/saidas/saldo_final)
+    // na tabela fluxo_caixa. Isso pode ser feito via trigger no banco ou explicitamente aqui.
+    // Por enquanto, vamos focar na inserção correta.
+
+    return { 
+      comissao: comissaoAtualizada as Comissao, 
+      movimentacao 
+    };
+    
+  } catch (err) {
+    console.error(`Exceção ao dar baixa na comissão ${comissaoId}:`, err);
+    throw err instanceof Error ? err : new Error('Erro desconhecido ao dar baixa na comissão.');
   }
 }; 

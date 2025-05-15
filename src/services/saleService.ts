@@ -296,7 +296,75 @@ export const createSale = async (saleData: SaleDataInput) => {
   console.log("[createSale] Atualização de estoque concluída (com possíveis avisos).");
   // <<<<<<<<<<<<<<<<<< FIM: Atualização de Estoque >>>>>>>>>>>>>>>>>>>>
 
-  // 3. Criar a Receita correspondente
+  // 3. Criar as Parcelas (se for venda a prazo)
+  if (saleData.num_parcelas && saleData.num_parcelas > 0 && saleData.primeiro_vencimento) {
+    console.log("[createSale] Venda a prazo detectada. Criando parcelas...");
+    try {
+      const numParcelas = saleData.num_parcelas;
+      // Garante que o primeiro_vencimento seja tratado como data local (YYYY-MM-DD)
+      // A string já deve vir no formato YYYY-MM-DD do frontend
+      const primeiroVencimentoStr = saleData.primeiro_vencimento; 
+      const valorParcela = parseFloat((saleData.valor_total / numParcelas).toFixed(2));
+      const parcelasParaInserir = [];
+
+      // Data da venda para comparação de atraso (considerar apenas a data, sem hora)
+      // Usa a data_venda já processada (dataVendaISO) e converte para YYYY-MM-DD no fuso local.
+      const dataVendaObj = new Date(dataVendaISO);
+      const dataVendaLocalParaComparacao = formatInTimeZone(dataVendaObj, 'America/Sao_Paulo', 'yyyy-MM-dd');
+
+      console.log(`[createSale] Data da Venda (para comparar atraso): ${dataVendaLocalParaComparacao}`);
+      console.log(`[createSale] Primeiro Vencimento (string): ${primeiroVencimentoStr}`);
+
+      for (let i = 0; i < numParcelas; i++) {
+        const dataVencimentoParcela = new Date(primeiroVencimentoStr.replace(/-/g, '/')); // Safari friendly
+        dataVencimentoParcela.setMonth(dataVencimentoParcela.getMonth() + i);
+        
+        // Normaliza a data de vencimento para string YYYY-MM-DD
+        const dataVencimentoParcelaStr = formatInTimeZone(dataVencimentoParcela, 'America/Sao_Paulo', 'yyyy-MM-dd');
+
+        let statusParcela = 'aguardando';
+        if (dataVencimentoParcelaStr < dataVendaLocalParaComparacao) {
+          statusParcela = 'atrasada';
+        }
+
+        parcelasParaInserir.push({
+          venda_id: newVendaId,
+          user_id: user.id,
+          valor: valorParcela,
+          data_vencimento: dataVencimentoParcelaStr, // Armazena como YYYY-MM-DD
+          status: statusParcela,
+          observacoes: `Parcela ${i + 1} de ${numParcelas}`,
+          forma_pagamento_id: saleData.forma_pagamento_id, // Adicionado para consistência
+        });
+      }
+      
+      console.log("[createSale] Parcelas para inserir:", JSON.stringify(parcelasParaInserir, null, 2));
+      const { error: insertParcelasError } = await supabase
+        .from('pagamentos_prazo')
+        .insert(parcelasParaInserir);
+            
+      if (insertParcelasError) {
+        console.error("[createSale] Erro ao inserir parcelas:", insertParcelasError);
+        // Rollback manual: deletar itens e a venda principal
+        await supabase.from('vendas_items').delete().eq('venda_id', newVendaId);
+        await supabase.from('vendas').delete().eq('id', newVendaId);
+        throw new Error(`Erro ao inserir parcelas: ${insertParcelasError.message}. Venda e itens foram removidos.`);
+      }
+      console.log("[createSale] Parcelas inseridas com sucesso.");
+
+    } catch (parcelasError) {
+      console.error("[createSale] Exceção ao processar/inserir parcelas:", parcelasError);
+      // Se já não foi feito no bloco de erro do insert, tentar rollback aqui também
+      // (Idealmente, usar transações do Supabase se/quando disponíveis de forma mais robusta no client-side)
+      // Por agora, o rollback no erro do insert é o principal.
+      // Lançar o erro para que a criação da venda seja interrompida.
+      throw parcelasError; 
+    }
+  } else {
+    console.log("[createSale] Não é uma venda a prazo ou não possui dados de parcelamento. Pulando criação de parcelas.");
+  }
+
+  // 4. Criar a Receita correspondente (Movido para depois da criação de parcelas)
   console.log("[createSale] Criando registro na tabela 'receitas'...");
   try {
     // Obter apenas a parte da data (YYYY-MM-DD) no fuso horário local
@@ -332,7 +400,7 @@ export const createSale = async (saleData: SaleDataInput) => {
       toast.error("Erro inesperado ao tentar criar a receita associada à venda.");
   }
 
-  // 4. Registrar no Fluxo de Caixa (se for pagamento à vista)
+  // 5. Registrar no Fluxo de Caixa (se for pagamento à vista)
   if (saleData.forma_pagamento_id && FORMAS_PAGAMENTO_A_VISTA.includes(saleData.forma_pagamento_id)) {
     console.log(`[createSale] Forma de pagamento "${saleData.forma_pagamento_id}" é à vista. Registrando no fluxo de caixa...`);
     try {

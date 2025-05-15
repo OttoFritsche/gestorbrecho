@@ -123,10 +123,10 @@ const getMonthChartTotals = async (date: Date): Promise<{ totalVendido: number; 
   // Buscar Total Vendido (Receita Bruta das Vendas)
   try {
     const { data: vendas, error: vendasError } = await supabase
-      .from('vendas') // <-- Tabela correta: vendas
+      .from('vendas') 
       .select('valor_total')
-      .gte('data_venda_local', inicioMesStr) // <-- Coluna e formato corretos
-      .lte('data_venda_local', fimMesStr);    // <-- Coluna e formato corretos
+      .gte('data_venda', inicioMes.toISOString()) // Corrigido para usar data_venda e formato ISO
+      .lte('data_venda', fimMes.toISOString());   // Corrigido para usar data_venda e formato ISO
 
     if (vendasError) {
       console.error(`Erro ao buscar vendas para gráfico (${format(date, 'MM/yyyy')}):`, vendasError);

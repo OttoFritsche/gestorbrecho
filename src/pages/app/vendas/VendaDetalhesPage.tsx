@@ -63,7 +63,8 @@ const VendaDetalhesPage = () => {
         case 'aguardando':
             try {
                 if (dataVencimentoStr) {
-                    const dataVencimento = new Date(dataVencimentoStr.replace(/-/g, '/'));
+                    const parts = dataVencimentoStr.split('-').map(Number);
+                    const dataVencimento = new Date(parts[0], parts[1] - 1, parts[2]);
                     dataVencimento.setHours(0, 0, 0, 0); // Zera horas
 
                     if (dataVencimento < today) {

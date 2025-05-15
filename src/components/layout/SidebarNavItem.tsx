@@ -34,9 +34,8 @@ export function SidebarNavItem({
   
   // Verificar alterações na rota para fechar os dropdowns quando apropriado
   React.useEffect(() => {
-    // Se não for o item "Financeiro" ou não for o item ativo e não tiver filhos ativos, 
-    // feche o dropdown quando a rota mudar
-    if (item.label !== "Financeiro" && !isActive && !hasActiveChild && open) {
+    // Remover tratamento especial para "Financeiro"
+    if (!isActive && !hasActiveChild && open) {
       setOpen(false);
     }
   }, [location.pathname]);
@@ -123,13 +122,11 @@ export function SidebarNavItem({
   // Handler para navegação de itens filhos que fechará o dropdown do pai
   const handleChildNavigation = () => {
     // Fechar dropdown após navegação para um item filho
-    // Verificamos se o item pai é Financeiro, que é o que está com problema
-    if (item.label === "Financeiro") {
-      // Fechar com um pequeno atraso para melhorar a UX
-      setTimeout(() => {
-        setOpen(false);
-      }, 150);
-    }
+    // Remover tratamento especial para "Financeiro"
+    // Fechar com um pequeno atraso para melhorar a UX para todos os itens
+    setTimeout(() => {
+      setOpen(false);
+    }, 150);
     
     if (onNavItemClick) {
       onNavItemClick();

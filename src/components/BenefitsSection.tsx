@@ -3,6 +3,7 @@ import React from 'react';
 // import { BrainCircuit, MessageCircle, TrendingUp, Lightbulb } from "lucide-react"; 
 // Importa a imagem conceitual da IA (versão clara para fundo escuro)
 import iaConceptImageLight from '@/assets/imagens/ia-brecho-claro.png';
+import { MessageSquare, Search, Zap, Lightbulb } from "lucide-react"; // Ícones para os benefícios
 
 // Array contendo os dados dos benefícios a serem exibidos
 // Comentado/Removido - Será preenchido com benefícios específicos da IA posteriormente
@@ -30,6 +31,33 @@ const benefits = [
   }
 ];
 */
+
+const iaBenefits = [
+  {
+    icon: <MessageSquare className="h-8 w-8 text-amber-600" />,
+    title: "Converse com Seus Dados",
+    description: "Pergunte sobre seu estoque, vendas e finanças em linguagem natural e obtenha respostas rápidas.",
+    note: "(Visão futura, com n8n como intermediário inicial)"
+  },
+  {
+    icon: <Search className="h-8 w-8 text-amber-600" />,
+    title: "Acompanhamento Inteligente de Vendas",
+    description: "Questione \"Qual foi meu total de vendas hoje?\" e receba as informações diretamente do seu assistente.",
+    note: "(Visão futura, com n8n como intermediário inicial)"
+  },
+  {
+    icon: <Lightbulb className="h-8 w-8 text-amber-600" />,
+    title: "Insights e Sugestões Estratégicas",
+    description: "A IA analisará seus dados para oferecer dicas sobre precificação, reposição de estoque e tendências de mercado.",
+    note: "(Recurso em desenvolvimento)"
+  },
+  {
+    icon: <Zap className="h-8 w-8 text-amber-600" />,
+    title: "Agilidade em Tarefas Rotineiras",
+    description: "Deixe que o assistente ajude com lembretes, cadastros rápidos e outras operações do dia a dia.",
+    note: "(Capacidade evolutiva)"
+  }
+];
 
 // Componente que renderiza a seção de benefícios, agora focado em IA
 const BenefitsSection = () => {
@@ -69,12 +97,21 @@ const BenefitsSection = () => {
             </h2>
             {/* Container para a lista de benefícios (Placeholder) */}
             <div className="space-y-6">
-              {/* TODO: Descomentar e preencher com os benefícios reais da IA quando definidos */} 
-              {/* {benefits.map((benefit, index) => ( ... renderização dos cards ... ))} */} 
-              <div className="bg-white p-6 rounded-xl border border-amber-100 shadow-sm">
-                 <h3 className="text-xl font-semibold text-amber-800 mb-2">Em breve...</h3>
-                 <p className="text-stone-600">Estamos preparando análises e um chatbot incríveis para você. Detalhes serão adicionados aqui em breve!</p>
-              </div>
+              {iaBenefits.map((benefit, index) => (
+                <div key={index} className="bg-white p-6 rounded-xl border border-amber-100 shadow-sm flex gap-4 items-start">
+                  <div className="flex-shrink-0">
+                    {benefit.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-amber-800 mb-1">{benefit.title}</h3>
+                    <p className="text-stone-600 mb-1">{benefit.description}</p>
+                    {benefit.note && <p className="text-xs text-stone-500 italic">{benefit.note}</p>}
+                  </div>
+                </div>
+              ))}
+              <p className="mt-4 text-sm text-stone-600">
+                Pesquisamos e desenvolvemos continuamente novas capacidades para nossa IA, buscando sempre a melhor experiência e os melhores resultados para o seu brechó!
+              </p>
             </div>
           </div>
         </div>
